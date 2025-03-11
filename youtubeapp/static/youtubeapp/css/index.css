@@ -1,0 +1,136 @@
+/* Main Content Styling */
+.logo-container {
+    margin: 2rem 0;
+    text-align: center;
+}
+
+.animated-logo {
+    height: 80px;
+    transition: transform 0.5s ease, filter 0.5s ease;
+}
+
+.animated-logo.pulse {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 10px var(--deepseek-primary));
+}
+
+.text-gradient {
+    background: linear-gradient(135deg, var(--deepseek-primary), var(--deepseek-secondary));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.section-header {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.accent-line {
+    width: 50px;
+    height: 3px;
+    background: linear-gradient(to right, var(--deepseek-primary), var(--deepseek-secondary));
+    margin-top: 8px;
+}
+
+/* Tags Section Styling */
+.tags-container {
+    background-color: var(--deepseek-light); 
+    border-radius: 16px;
+    padding: 25px;
+    margin-bottom: 20px;
+    border: 1px solid var(--deepseek-border);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.tags-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+}
+
+.list-group-item {
+    background-color: rgba(59, 130, 246, 0.05);
+    color: var(--deepseek-text);
+    border: 1px solid rgba(59, 130, 246, 0.1);
+    margin: 8px 0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    transition: all 0.3s ease;
+    animation: slideIn 0.5s ease forwards;
+    opacity: 0;
+    transform: translateX(-20px);
+}
+
+@keyframes slideIn {
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.list-group-item:hover {
+    background-color: rgba(59, 130, 246, 0.1);
+    transform: translateX(5px);
+}
+
+/* Hover effect for tags */
+.tag-item:hover {
+    background-color: rgba(59, 130, 246, 0.1);
+    cursor: pointer;
+}
+
+/* Tag Name Styling */
+.tag-name {
+    font-weight: 500;
+}
+
+.badge.bg-deepseek-accent {
+    background-color: var(--deepseek-secondary); 
+    color: var(--deepseek-light); 
+    padding: 6px 10px;
+    border-radius: 20px;
+    font-weight: 500;
+    font-size: 0.8rem;
+}
+
+/* Feature Cards Styling */
+.feature-card {
+    background-color: var(--deepseek-light); 
+    border-radius: 16px;
+    padding: 25px;
+    height: 100%; 
+    border: 1px solid var(--deepseek-border);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15); 
+}
+
+/* Button Spinning Animation */
+.rotating {
+    animation: rotating 1s linear;
+}
+
+@keyframes rotating {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+    .tags-container, .feature-card {
+        padding: 15px;
+    }
+    
+    .animated-logo {
+        height: 60px;
+    }
+}

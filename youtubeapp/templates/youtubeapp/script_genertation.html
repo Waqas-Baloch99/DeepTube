@@ -1,0 +1,222 @@
+{% extends 'youtubeapp/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row g-4">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <div class="glass-panel p-4 rounded-4">
+                <h2 class="mb-4 gradient-text">
+                    <i class="fas fa-magic me-2"></i>AI Script Generator
+                </h2>
+                
+                <!-- Generation Form -->
+                <form id="scriptForm" class="needs-validation" novalidate>
+                    <div class="row g-3">
+                        <!-- Topic Input -->
+                        <div class="col-md-12">
+                            <label for="topic" class="form-label">Video Topic</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-lightbulb"></i>
+                                </span>
+                                <input type="text" class="form-control glass-input" id="topic" 
+                                       placeholder="Enter your video topic" required>
+                            </div>
+                        </div>
+
+                        <!-- Parameters Grid -->
+                        <div class="col-md-6">
+                            <label for="length" class="form-label">Video Length</label>
+                            <select class="form-select glass-input" id="length" required>
+                                <option value="short">Short (1-3 minutes)</option>
+                                <option value="medium">Medium (5-10 minutes)</option>
+                                <option value="long">Long (10+ minutes)</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="tone" class="form-label">Tone</label>
+                            <select class="form-select glass-input" id="tone" required>
+                                <option value="professional">Professional</option>
+                                <option value="casual">Casual</option>
+                                <option value="humorous">Humorous</option>
+                                <option value="inspirational">Inspirational</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label for="audience" class="form-label">Target Audience</label>
+                            <input type="text" class="form-control glass-input" id="audience" 
+                                   placeholder="E.g., Tech enthusiasts, Students, Entrepreneurs">
+                        </div>
+
+                        <!-- Additional Options -->
+                        <div class="col-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="addBroll">
+                                <label class="form-check-label" for="addBroll">
+                                    Include B-roll suggestions
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="addMusic">
+                                <label class="form-check-label" for="addMusic">
+                                    Include music recommendations
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Generate Button -->
+                        <div class="col-12 mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg w-100 glow-effect">
+                                <i class="fas fa-wand-magic-sparkles me-2"></i>Generate Script
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Generated Script Display -->
+            <div class="glass-panel mt-4 p-4 rounded-4" id="scriptOutput" style="display: none;">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h3 class="gradient-text">Your AI-Generated Script</h3>
+                    <button class="btn btn-outline-secondary copy-btn" 
+                            data-bs-toggle="tooltip" title="Copy to Clipboard">
+                        <i class="fas fa-copy"></i>
+                    </button>
+                </div>
+                <div class="script-content p-3 rounded-3">
+                    <!-- Script content will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar Guidance -->
+        <div class="col-lg-4">
+            <div class="glass-panel p-4 rounded-4">
+                <h4 class="gradient-text mb-3">
+                    <i class="fas fa-tips me-2"></i>Best Practices
+                </h4>
+                <div class="tip-card p-3 mb-3 rounded-3">
+                    <h5><i class="fas fa-bullseye me-2"></i>Clear Objectives</h5>
+                    <p class="small mb-0">Define your video's purpose before generating the script.</p>
+                </div>
+                <div class="tip-card p-3 mb-3 rounded-3">
+                    <h5><i class="fas fa-users me-2"></i>Audience Focus</h5>
+                    <p class="small mb-0">Specify your target audience for better personalization.</p>
+                </div>
+                <div class="tip-card p-3 rounded-3">
+                    <h5><i class="fas fa-clock me-2"></i>Optimal Length</h5>
+                    <p class="small mb-0">Match video length to content depth and platform requirements.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Form Validation
+    $('#scriptForm').on('submit', function(e) {
+        e.preventDefault();
+        if (this.checkValidity()) {
+            // Show loading state
+            const btn = $(this).find('button[type="submit"]');
+            btn.html('<i class="fas fa-spinner fa-spin me-2"></i>Generating...');
+            
+            // Simulate API call
+            setTimeout(() => {
+                // Show generated script
+                $('#scriptOutput').fadeIn();
+                btn.html('<i class="fas fa-wand-magic-sparkles me-2"></i>Generate Script');
+                
+                // Add sample content
+                $('.script-content').html(`
+                    <h4 class="mb-3">Sample Script Structure</h4>
+                    <div class="scene mb-3">
+                        <h5><i class="fas fa-play-circle me-2"></i>Opening Hook</h5>
+                        <p>Engaging introduction based on your topic...</p>
+                    </div>
+                    <div class="scene mb-3">
+                        <h5><i class="fas fa-chart-line me-2"></i>Main Content</h5>
+                        <p>Detailed breakdown of key points...</p>
+                    </div>
+                    <div class="scene">
+                        <h5><i class="fas fa-flag-checkered me-2"></i>Conclusion</h5>
+                        <p>Strong closing statement with call-to-action...</p>
+                    </div>
+                `);
+            }, 1500);
+        }
+        this.classList.add('was-validated');
+    });
+
+    // Copy to Clipboard
+    $('.copy-btn').click(function() {
+        const text = $('.script-content').text();
+        navigator.clipboard.writeText(text);
+        $(this).attr('title', 'Copied!').tooltip('show');
+        setTimeout(() => $(this).attr('title', 'Copy to Clipboard'), 2000);
+    });
+
+    // Initialize tooltips
+    $('[data-bs-toggle="tooltip"]').tooltip();
+});
+</script>
+
+<style>
+.gradient-text {
+    background: linear-gradient(135deg, var(--deepseek-primary), var(--deepseek-accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.glass-input {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid var(--deepseek-border) !important;
+    color: var(--deepseek-light) !important;
+    backdrop-filter: blur(10px);
+}
+
+.glass-input:focus {
+    box-shadow: 0 0 0 3px var(--deepseek-glow) !important;
+}
+
+.tip-card {
+    background: rgba(59, 130, 246, 0.1);
+    border: 1px solid var(--deepseek-border);
+    transition: transform 0.3s ease;
+}
+
+.tip-card:hover {
+    transform: translateY(-3px);
+}
+
+.script-content {
+    background: rgba(0, 0, 0, 0.2);
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.scene {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border-left: 4px solid var(--deepseek-primary);
+}
+
+.copy-btn {
+    transition: all 0.3s ease;
+}
+
+.copy-btn:hover {
+    transform: scale(1.1);
+}
+</style>
+{% endblock %}
