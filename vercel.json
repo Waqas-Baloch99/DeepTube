@@ -1,23 +1,18 @@
 {
-  "version": 2,
   "builds": [
     {
-      "src": "youtube/asgi.py",
+      "src": "youtube/vercel.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/static/(.*)",
-<<<<<<< HEAD
       "dest": "/static/$1"
-=======
-      "dest": "/public/static/$1"
->>>>>>> 4c7eb347a199cd198d8953ddf1f858d4b98d74ce
     },
     {
       "src": "/(.*)",
-      "dest": "/youtube/asgi.py"
+      "dest": "youtube/vercel.py"
     }
   ]
 }

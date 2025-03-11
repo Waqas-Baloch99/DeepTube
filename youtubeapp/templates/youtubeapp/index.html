@@ -2,96 +2,237 @@
 {% load static %}
 
 {% block content %}
-<div class="row mb-4">
-    <div class="col-12 text-center">
-        <div class="logo-container"> 
-            <h1 class="mt-3">DeepTube <span class="text-gradient">AI Assistant</span></h1>
-            <p class="lead">Discover and create engaging content with AI-powered insights</p>
+<div class="container py-5">
+    <!-- Error Banner (if blocked) -->
+    <div class="row mb-4" id="errorBanner" style="display: none;">
+        <div class="col-12">
+            <div class="alert alert-warning alert-dismissible fade show shadow-sm" role="alert">
+                <h4 class="alert-heading">Connection Issue</h4>
+                <p>Sorry, we've encountered a security block. Please try again later or contact support.</p>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Trending Tags Section -->
-<div class="row">
-    <div class="col-12 tags-container">
-        <div class="section-header">
-            <h4>Trending Tags</h4>
-            <div class="accent-line"></div>
+    <!-- Logo & Tagline Section -->
+    <div class="row mb-5 text-center">
+        <div class="col-12">
+            <div class="logo-container glass-effect p-4 rounded-4 shadow-sm">
+                <h1 class="display-4 fw-bold">DeepTube <span class="text-gradient">AI Assistant</span></h1>
+                <p class="lead text-muted mt-2">Discover and create engaging content with AI-powered insights</p>
+            </div>
         </div>
-        <p>Discover the latest trending topics to inspire your content!</p>
-        <ul id="trendingTags" class="list-group"></ul>
-        <button class="btn btn-deepseek mt-3" id="refreshTags">
-            <i class="fas fa-sync-alt me-2"></i> Refresh Trends
-        </button>
     </div>
-</div>
 
-<!-- Features Section -->
-<div class="row mt-4">
-    <div class="col-md-6">
-        <div class="feature-card">
-            <div class="section-header">
-                <h4>Generate Content</h4>
+    <!-- Trending Tags Section -->
+    <div class="row mb-5">
+        <div class="col-12 tags-container glass-effect p-4 rounded-4 shadow-sm">
+            <div class="section-header mb-3">
+                <h4 class="fw-bold"><i class="fas fa-fire me-2"></i>Trending Tags</h4>
                 <div class="accent-line"></div>
             </div>
-            <p>Create engaging videos, scripts, and social media content with our AI tools.</p>
-            <a href="{% url 'youtubeapp:script_generation' %}" class="btn btn-deepseek">Get Started</a>
+            <p class="text-muted mb-3">Explore the latest trending topics to inspire your content!</p>
+            <ul id="trendingTags" class="list-group list-group-flush"></ul>
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <button class="btn btn-deepseek glow-effect" id="refreshTags">
+                    <i class="fas fa-sync-alt me-2"></i> Refresh Trends
+                </button>
+                <span class="text-muted small" id="lastUpdated">Last updated: just now</span>
+            </div>
         </div>
     </div>
-    <div class="col-md-6">
-        <div class="feature-card">
-            <div class="section-header">
-                <h4>Analytics Dashboard</h4>
-                <div class="accent-line"></div>
+
+    <!-- Features Section -->
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="feature-card glass-effect p-4 rounded-4 shadow-sm">
+                <div class="section-header mb-3">
+                    <h4 class="fw-bold"><i class="fas fa-magic me-2"></i>Generate Content</h4>
+                    <div class="accent-line"></div>
+                </div>
+                <p class="text-muted">AI-powered tools to create engaging videos, scripts, and social media content effortlessly.</p>
+                <a href="{% url 'youtubeapp:script_generation' %}" class="btn btn-deepseek glow-effect">
+                    <i class="fas fa-magic me-2"></i> Get Started
+                </a>
             </div>
-            <p>Track performance and gain insights from your published content.</p>
-            <button class="btn btn-deepseek">View Analytics</button>
+        </div>
+        <div class="col-md-6">
+            <div class="feature-card glass-effect p-4 rounded-4 shadow-sm">
+                <div class="section-header mb-3">
+                    <h4 class="fw-bold"><i class="fas fa-chart-line me-2"></i>Analytics Dashboard</h4>
+                    <div class="accent-line"></div>
+                </div>
+                <p class="text-muted">Track performance metrics and gain actionable insights from your content.</p>
+                <button class="btn btn-deepseek glow-effect">
+                    <i class="fas fa-chart-line me-2"></i> View Analytics
+                </button>
+            </div>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
+<!-- FontAwesome Icons -->
 <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
 <script>
 $(document).ready(function() {
-    const trendingTags = [
-        {name: '#AIRevolution', count: 2543},
-        {name: '#VideoContent', count: 1872},
-        {name: '#TechTrends', count: 1654},
-        {name: '#SaaS2025', count: 1432},
-        {name: '#DeepSeek', count: 2105}
+    // Sample trending tags with more variety
+    let trendingTags = [
+        {name: '#AIRevolution', count: 2543, growth: '+12%'},
+        {name: '#VideoContent', count: 1872, growth: '+8%'},
+        {name: '#TechTrends', count: 1654, growth: '+15%'},
+        {name: '#SaaS2025', count: 1432, growth: '+5%'},
+        {name: '#DeepSeek', count: 2105, growth: '+20%'}
     ];
-    
-    function updateTrendingTags() {
-        let tagsHtml = '';
-        trendingTags.forEach(tag => {
-            tagsHtml += `
-                <li class="list-group-item d-flex justify-content-between align-items-center tag-item">
-                    <span class="tag-name">${tag.name}</span>
-                    <span class="badge bg-deepseek-accent">${tag.count} posts</span>
-                </li>`;
-        });
+
+    function updateTrendingTags(simulateError = false) {
+        if (simulateError) {
+            $('#errorBanner').slideDown();
+            $('#trendingTags').html('<li class="list-group-item text-muted">Unable to load trends</li>');
+            return;
+        }
+
+        let tagsHtml = trendingTags.map(tag => `
+            <li class="list-group-item d-flex justify-content-between align-items-center tag-item rounded-3 mb-2">
+                <span class="tag-name fw-medium">${tag.name}</span>
+                <div>
+                    <span class="badge bg-deepseek-accent me-2">${tag.count} posts</span>
+                    <span class="badge bg-success">${tag.growth}</span>
+                </div>
+            </li>
+        `).join('');
         $('#trendingTags').html(tagsHtml);
+        $('#lastUpdated').text(`Last updated: ${new Date().toLocaleTimeString()}`);
     }
-    
+
+    // Initial load
     updateTrendingTags();
-    
+
+    // Refresh button with animation and error simulation
     $('#refreshTags').click(function() {
-        $(this).addClass('rotating');
+        $(this).addClass('rotating').prop('disabled', true);
         setTimeout(() => {
-            updateTrendingTags();
-            $(this).removeClass('rotating');
+            // Simulate 10% chance of error (like Cloudflare block)
+            const simulateError = Math.random() < 0.1;
+            updateTrendingTags(simulateError);
+            $(this).removeClass('rotating').prop('disabled', false);
         }, 1000);
     });
 
-    // Add a hover effect for the tags
+    // Interactive effects
     $(document).on('mouseenter', '.tag-item', function() {
-        $(this).addClass('highlight');
+        $(this).addClass('highlight shadow-sm');
     }).on('mouseleave', '.tag-item', function() {
-        $(this).removeClass('highlight');
+        $(this).removeClass('highlight shadow-sm');
+    });
+
+    $(document).on('click', '.tag-name', function() {
+        const tag = $(this).text();
+        alert(`Explore content for ${tag}`);
+    });
+
+    // Feature card hover effect
+    $('.feature-card').hover(
+        function() { $(this).addClass('shadow-lg').css('transform', 'translateY(-5px)'); },
+        function() { $(this).removeClass('shadow-lg').css('transform', 'translateY(0)'); }
+    );
+
+    // Dismiss error banner
+    $('#errorBanner .btn-close').click(function() {
+        $('#errorBanner').slideUp();
     });
 });
 </script>
+
+<!-- Custom Styles -->
+<style>
+:root {
+    --deepseek-primary: #3b82f6;
+    --deepseek-accent: #8b5cf6;
+    --deepseek-border: rgba(255, 255, 255, 0.1);
+    --deepseek-glow: rgba(59, 130, 246, 0.3);
+}
+
+.text-gradient {
+    background: linear-gradient(135deg, var(--deepseek-primary), var(--deepseek-accent));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.glass-effect {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(15px);
+    border: 1px solid var(--deepseek-border);
+    transition: all 0.3s ease;
+}
+
+.accent-line {
+    width: 50px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--deepseek-primary), var(--deepseek-accent));
+    border-radius: 2px;
+    margin: 0.5rem 0;
+}
+
+.btn-deepseek {
+    background: linear-gradient(135deg, var(--deepseek-primary), var(--deepseek-accent));
+    border: none;
+    color: white;
+    padding: 0.75rem 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.btn-deepseek:hover {
+    box-shadow: 0 0 15px var(--deepseek-glow);
+    transform: translateY(-2px);
+    color: white;
+}
+
+.tag-item {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--deepseek-border);
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.tag-item.highlight {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--deepseek-primary);
+}
+
+.tag-name:hover {
+    color: var(--deepseek-primary);
+}
+
+.feature-card {
+    min-height: 200px;
+    transition: all 0.3s ease;
+}
+
+.rotating {
+    animation: spin 1s linear infinite;
+}
+
+.glow-effect {
+    box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+#trendingTags::-webkit-scrollbar {
+    width: 8px;
+}
+
+#trendingTags::-webkit-scrollbar-thumb {
+    background: var(--deepseek-primary);
+    border-radius: 4px;
+}
+</style>
 <link rel="stylesheet" href="{% static 'youtubeapp/css/index.css' %}">
 {% endblock %}
