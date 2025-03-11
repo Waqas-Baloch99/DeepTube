@@ -1,12 +1,14 @@
 {
-    "builds": [{
-        "src": "youtube/wsgi.py",
-        "use": "@vercel/python"
-    }],
-    "routes": [
-        {
-            "src": "/(.*)",
-            "dest": "youtube/wsgi.py"
-        }
-    ]
+  "builds": [
+    {
+      "src": "youtube/vercel.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "youtube/vercel.py"
+    }
+  ]
 }
