@@ -2,14 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "youtube/asgi.py",  // This should point to the ASGI entry point
+      "src": "youtube/asgi.py",  
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "youtube/asgi.py"  // Route all requests to ASGI app
+      "dest": "youtube/asgi.py" 
     }
   ]
 }
