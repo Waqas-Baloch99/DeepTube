@@ -40,6 +40,9 @@
         .message-input { flex-grow: 1; border: 1px solid #ccc; border-radius: 5px; padding: 6px; }
         .btn-send { background: #007bff; color: white; border: none; border-radius: 5px; padding: 6px 12px; margin-left: 8px; transition: background 0.2s; }
         .btn-send:hover { background: #0056b3; }
+        .btn-voice { background: #28a745; color: white; border: none; border-radius: 5px; padding: 6px 12px; margin-left: 8px; transition: background 0.2s; }
+        .btn-voice:hover { background: #218838; }
+        .btn-voice.listening { background: #dc3545; }
     </style>
 </head>
 <body>
@@ -101,6 +104,9 @@
                     <button class="btn-send" id="sendButton">
                         <i class="fas fa-paper-plane"></i>
                     </button>
+                    <button class="btn-voice" id="voiceButton" title="Click to start/stop voice input">
+                        <i class="fas fa-microphone"></i>
+                    </button>
                 </div>
             </div>
         </div>
@@ -109,10 +115,18 @@
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 
-    <!-- Chat Script -->
+    <!-- Chat Script with Voice Input and Output -->
     <script>
     $(document).ready(function() {
         const csrfToken = $('[name=csrfmiddlewaretoken]').val();
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        const synth = window.speechSynthesis;
+        let isListening = false;
+        let wasVoiceInput = false;
+
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
 
         // Chat widget toggle
         $('#chatContainer').hide();
@@ -126,49 +140,96 @@
         $('#closeChat').click(function() {
             $('#chatContainer').slideUp(300).removeClass('active');
             $('#askDeepSeek').fadeIn(200);
+            stopVoiceInput();
         });
 
-        // Send message
+        // Send message (text)
         $('#sendButton, #userInput').on('click keypress', function(e) {
             if (e.type === 'click' || (e.type === 'keypress' && e.which === 13)) {
                 const message = $('#userInput').val().trim();
                 if (!message) return;
 
-                displayMessage(message, 'user');
-                $('#userInput').val('');
-                displayThinkingMessage();
-                $('#sendButton').prop('disabled', true);
-
-                fetch('/chat/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken
-                    },
-                    body: JSON.stringify({ message: message })
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        return response.json().then(err => {
-                            throw new Error(err.error || `Server error: ${response.status}`);
-                        });
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    removeThinkingMessage();
-                    displayMessage(data.response, 'bot');
-                })
-                .catch(error => {
-                    removeThinkingMessage();
-                    displayMessage(`Error: ${error.message}`, 'bot');
-                    console.error('Chat error:', error);
-                })
-                .finally(() => {
-                    $('#sendButton').prop('disabled', false);
-                });
+                wasVoiceInput = false;  // Text input, not voice
+                sendMessage(message);
             }
         });
+
+        // Voice input
+        $('#voiceButton').click(function() {
+            if (isListening) {
+                stopVoiceInput();
+            } else {
+                startVoiceInput();
+            }
+        });
+
+        recognition.onresult = function(event) {
+            const transcript = event.results[0][0].transcript.trim();
+            $('#userInput').val(transcript);
+            wasVoiceInput = true;  // Mark as voice input
+            sendMessage(transcript);
+            stopVoiceInput();
+        };
+
+        recognition.onerror = function(event) {
+            displayMessage(`Voice input error: ${event.error}`, 'bot');
+            stopVoiceInput();
+        };
+
+        recognition.onend = function() {
+            if (isListening) stopVoiceInput();
+        };
+
+        function startVoiceInput() {
+            isListening = true;
+            $('#voiceButton').addClass('listening').html('<i class="fas fa-microphone-slash"></i>');
+            recognition.start();
+        }
+
+        function stopVoiceInput() {
+            isListening = false;
+            $('#voiceButton').removeClass('listening').html('<i class="fas fa-microphone"></i>');
+            recognition.stop();
+        }
+
+        function sendMessage(message) {
+            displayMessage(message, 'user');
+            $('#userInput').val('');
+            displayThinkingMessage();
+            $('#sendButton').prop('disabled', true);
+
+            fetch('/chat/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ message: message })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || `Server error: ${response.status}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                removeThinkingMessage();
+                displayMessage(data.response, 'bot');
+                if (wasVoiceInput) {
+                    speakResponse(data.response);
+                }
+            })
+            .catch(error => {
+                removeThinkingMessage();
+                displayMessage(`Error: ${error.message}`, 'bot');
+                console.error('Chat error:', error);
+            })
+            .finally(() => {
+                $('#sendButton').prop('disabled', false);
+            });
+        }
 
         function displayMessage(message, sender) {
             const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -186,7 +247,7 @@
             const thinkingHtml = `
                 <div class="message bot-message thinking-message" id="thinkingMessage">
                     <div class="message-content">
-                        DeepSeek is thinking...
+                        Processing your request...
                         <span class="thinking-indicator">
                             <span></span><span></span><span></span>
                         </span>
@@ -200,6 +261,15 @@
 
         function removeThinkingMessage() {
             $('#thinkingMessage').remove();
+        }
+
+        function speakResponse(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'en-US';
+            utterance.volume = 1.0;
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            synth.speak(utterance);
         }
     });
     </script>
