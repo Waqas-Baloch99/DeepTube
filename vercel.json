@@ -1,18 +1,26 @@
 {
+  "version": 2,
   "builds": [
     {
-      "src": "youtube/vercel.py",
+      "src": "youtube/wsgi.py",
       "use": "@vercel/python"
+    },
+    {
+      "src": "staticfiles/**/*",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
       "src": "/static/(.*)",
-      "dest": "/static/$1"
+      "dest": "/staticfiles/$1"
     },
     {
       "src": "/(.*)",
-      "dest": "youtube/vercel.py"
+      "dest": "youtube/wsgi.py"
     }
-  ]
+  ],
+  "env": {
+    "DJANGO_SETTINGS_MODULE": "youtube.settings"
+  }
 }
