@@ -103,7 +103,7 @@
             <!-- Generated Script Display -->
             <div class="glass-panel mt-4 p-4 rounded-4 shadow-sm" id="scriptOutput" style="display: none;">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h3 class="gradient-text">Your AI-Generated Script</h3>
+                    <h3 class="gradient-text">Your DeepSeek-Generated Script</h3>
                     <div class="btn-group">
                         <button class="btn btn-outline-secondary copy-btn" 
                                 data-bs-toggle="tooltip" title="Copy to Clipboard">
@@ -152,6 +152,8 @@
 {% block extra_js %}
 <script>
 $(document).ready(function() {
+    const csrfToken = $('[name=csrfmiddlewaretoken]').val();
+
     // Form Validation and Submission
     $('#scriptForm').on('submit', function(e) {
         e.preventDefault();
@@ -173,36 +175,35 @@ $(document).ready(function() {
                 cta: $('#addCTA').is(':checked')
             };
 
-            // Simulate API call
-            setTimeout(() => {
+            // Send to DeepSeek via API
+            fetch('/generate_script/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => {
+                        throw new Error(err.error || `Server error: ${response.status}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                $('#scriptOutput').slideDown();
+                $('.script-content').text(data.script); // Display raw script text
+                btn.prop('disabled', false)
+                   .html('<i class="fas fa-wand-magic-sparkles me-2"></i>Generate Script');
+            })
+            .catch(error => {
+                $('.script-content').text(`Error: ${error.message}`);
                 $('#scriptOutput').slideDown();
                 btn.prop('disabled', false)
                    .html('<i class="fas fa-wand-magic-sparkles me-2"></i>Generate Script');
-
-                // Enhanced sample content
-                $('.script-content').html(`
-                    <div class="script-meta mb-4">
-                        <p><strong>Topic:</strong> ${formData.topic}</p>
-                        <p><strong>Tone:</strong> ${formData.tone}</p>
-                        <p><strong>Length:</strong> ${formData.length}</p>
-                    </div>
-                    <div class="scene mb-3">
-                        <h5><i class="fas fa-play-circle me-2"></i>Opening Hook</h5>
-                        <p>Engaging introduction tailored to ${formData.audience || 'your audience'}...</p>
-                    </div>
-                    <div class="scene mb-3">
-                        <h5><i class="fas fa-chart-line me-2"></i>Main Content</h5>
-                        <p>Detailed breakdown in a ${formData.tone} tone...</p>
-                        ${formData.broll ? '<p class="broll-suggestion"><i class="fas fa-video me-2"></i>B-roll: Relevant footage suggestion</p>' : ''}
-                    </div>
-                    <div class="scene">
-                        <h5><i class="fas fa-flag-checkered me-2"></i>Conclusion</h5>
-                        <p>Strong closing statement...</p>
-                        ${formData.cta ? '<p class="cta-suggestion"><i class="fas fa-bullhorn me-2"></i>CTA: Subscribe now!</p>' : ''}
-                        ${formData.music ? '<p class="music-suggestion"><i class="fas fa-music me-2"></i>Music: Upbeat background track</p>' : ''}
-                    </div>
-                `);
-            }, 1500);
+            });
         }
         $form.addClass('was-validated');
     });
@@ -222,7 +223,7 @@ $(document).ready(function() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'script_output.txt';
+        a.download = 'deepseek_script.txt';
         a.click();
         window.URL.revokeObjectURL(url);
     });
@@ -290,6 +291,7 @@ $(document).ready(function() {
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: var(--deepseek-primary) transparent;
+    white-space: pre-wrap; /* Preserve formatting from DeepSeek */
 }
 
 .scene {
