@@ -70,21 +70,44 @@
                         <div class="col-12 mt-3">
                             <h5 class="text-muted mb-3">Enhancements</h5>
                             <div class="form-check mb-2">
-                                <input class="form-check-input" type="checkbox" id="addBroll">
+                                <input class="form-check-input" type="checkbox" id="addBroll" checked>
                                 <label class="form-check-label" for="addBroll">
                                     Include B-roll suggestions
                                 </label>
                             </div>
                             <div class="form-check mb-2">
-                                <input class="form-check-input" type="checkbox" id="addMusic">
+                                <input class="form-check-input" type="checkbox" id="addMusic" checked>
                                 <label class="form-check-label" for="addMusic">
                                     Include music recommendations
                                 </label>
                             </div>
                             <div class="form-check">
-                                <input class="form-check-input" type="checkbox" id="addCTA">
+                                <input class="form-check-input" type="checkbox" id="addCTA" checked>
                                 <label class="form-check-label" for="addCTA">
                                     Include call-to-action
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Filter Options -->
+                        <div class="col-12 mt-3">
+                            <h5 class="text-muted mb-3">Filter Output</h5>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="excludeBroll" checked>
+                                <label class="form-check-label" for="excludeBroll">
+                                    Include B-roll in output
+                                </label>
+                            </div>
+                            <div class="form-check mb-2">
+                                <input class="form-check-input" type="checkbox" id="excludeMusic" checked>
+                                <label class="form-check-label" for="excludeMusic">
+                                    Include Music in output
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="excludeCTA" checked>
+                                <label class="form-check-label" for="excludeCTA">
+                                    Include CTA in output
                                 </label>
                             </div>
                         </div>
@@ -103,21 +126,21 @@
             <!-- Generated Script Display -->
             <div class="glass-panel mt-4 p-4 rounded-4 shadow-sm" id="scriptOutput" style="display: none;">
                 <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h3 class="gradient-text">Your DeepSeek-Generated Script</h3>
+                    <h3 class="gradient-text">Your Generated Script</h3>
                     <div class="btn-group">
-                        <button class="btn btn-outline-secondary copy-btn" 
-                                data-bs-toggle="tooltip" title="Copy to Clipboard">
+                        <button class="btn btn-outline-secondary edit-btn" data-bs-toggle="tooltip" title="Edit Script">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary copy-btn" data-bs-toggle="tooltip" title="Copy to Clipboard">
                             <i class="fas fa-copy"></i>
                         </button>
-                        <button class="btn btn-outline-secondary download-btn" 
-                                data-bs-toggle="tooltip" title="Download as TXT">
+                        <button class="btn btn-outline-secondary download-btn" data-bs-toggle="tooltip" title="Download as TXT">
                             <i class="fas fa-download"></i>
                         </button>
                     </div>
                 </div>
-                <div class="script-content p-3 rounded-3">
-                    <!-- Script content will be inserted here -->
-                </div>
+                <div class="script-content p-3 rounded-3" contenteditable="false"></div>
+                <small class="text-muted mt-2 d-block" id="wordCount"></small>
             </div>
         </div>
 
@@ -129,7 +152,7 @@
                 </h4>
                 <div class="tip-card p-3 mb-3 rounded-3">
                     <h5><i class="fas fa-bullseye me-2"></i>Clear Objectives</h5>
-                    <p class="small mb-0">Define your video's purpose before generating the script for focused content.</p>
+                    <p class="small mb-0">Define your video's purpose before generating the script.</p>
                 </div>
                 <div class="tip-card p-3 mb-3 rounded-3">
                     <h5><i class="fas fa-users me-2"></i>Audience Focus</h5>
@@ -141,7 +164,7 @@
                 </div>
                 <div class="tip-card p-3 rounded-3">
                     <h5><i class="fas fa-magic me-2"></i>Enhance Output</h5>
-                    <p class="small mb-0">Use additional options to enrich your script with multimedia suggestions.</p>
+                    <p class="small mb-0">Use additional options to enrich your script.</p>
                 </div>
             </div>
         </div>
@@ -175,7 +198,7 @@ $(document).ready(function() {
                 cta: $('#addCTA').is(':checked')
             };
 
-            // Send to DeepSeek via API
+            // Send to API
             fetch('/generate_script/', {
                 method: 'POST',
                 headers: {
@@ -193,12 +216,34 @@ $(document).ready(function() {
                 return response.json();
             })
             .then(data => {
+                let scriptText = data.script.replace(/\n\s*\n/g, '\n\n').trim();
+
+                // Apply filters
+                if (!$('#excludeBroll').is(':checked')) {
+                    scriptText = scriptText.replace(/B-roll:.*?(?=\n\n|$)/gi, '');
+                }
+                if (!$('#excludeMusic').is(':checked')) {
+                    scriptText = scriptText.replace(/Music:.*?(?=\n\n|$)/gi, '');
+                }
+                if (!$('#excludeCTA').is(':checked')) {
+                    scriptText = scriptText.replace(/Call-to-Action:.*?(?=\n\n|$)/gi, '');
+                }
+
+                // Format section headers
+                scriptText = scriptText.replace(/\[([^\]]+)\]/g, '<strong>[$1]</strong>');
+
                 $('#scriptOutput').slideDown();
-                $('.script-content').text(data.script); // Display raw script text
+                $('.script-content').html(scriptText);
+
+                // Calculate word count
+                const wordCount = scriptText.split(/\s+/).filter(word => word.length > 0).length;
+                $('#wordCount').text(`Word Count: ${wordCount}`);
+
                 btn.prop('disabled', false)
                    .html('<i class="fas fa-wand-magic-sparkles me-2"></i>Generate Script');
             })
             .catch(error => {
+                console.error("Error:", error);
                 $('.script-content').text(`Error: ${error.message}`);
                 $('#scriptOutput').slideDown();
                 btn.prop('disabled', false)
@@ -206,6 +251,15 @@ $(document).ready(function() {
             });
         }
         $form.addClass('was-validated');
+    });
+
+    // Edit Script
+    $('.edit-btn').click(function() {
+        const $content = $('.script-content');
+        const isEditable = $content.attr('contenteditable') === 'true';
+        $content.attr('contenteditable', !isEditable);
+        $(this).toggleClass('btn-primary btn-outline-secondary');
+        $(this).attr('title', isEditable ? 'Edit Script' : 'Save Edit').tooltip('dispose').tooltip();
     });
 
     // Copy to Clipboard
@@ -223,7 +277,7 @@ $(document).ready(function() {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'deepseek_script.txt';
+        a.download = 'generated_script.txt';
         a.click();
         window.URL.revokeObjectURL(url);
     });
@@ -291,27 +345,13 @@ $(document).ready(function() {
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: var(--deepseek-primary) transparent;
-    white-space: pre-wrap; /* Preserve formatting from DeepSeek */
-}
-
-.scene {
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 12px;
-    border-left: 4px solid var(--deepseek-primary);
-    transition: all 0.3s ease;
-}
-
-.scene:hover {
-    background: rgba(255, 255, 255, 0.08);
-}
-
-.broll-suggestion, .music-suggestion, .cta-suggestion {
-    font-style: italic;
+    white-space: pre-wrap;
     color: var(--deepseek-light);
-    opacity: 0.9;
-    margin-top: 0.5rem;
+}
+
+.script-content[contenteditable="true"] {
+    border: 1px dashed var(--deepseek-primary);
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .btn.glow-effect {
@@ -324,11 +364,11 @@ $(document).ready(function() {
     transform: translateY(-2px);
 }
 
-.copy-btn, .download-btn {
+.copy-btn, .download-btn, .edit-btn {
     transition: all 0.3s ease;
 }
 
-.copy-btn:hover, .download-btn:hover {
+.copy-btn:hover, .download-btn:hover, .edit-btn:hover {
     transform: scale(1.1);
     background: rgba(255, 255, 255, 0.1);
 }
