@@ -5,44 +5,77 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}DeepTube{% endblock %}</title>
-    
+
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <link href="{% static 'youtubeapp/css/style.css' %}" rel="stylesheet">
-    
+
     <!-- jQuery & FontAwesome -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous">
+
+    <style>
+        /* Custom styles for chat widget */
+        .deepseek-chat-widget { position: fixed; bottom: 20px; right: 20px; z-index: 1000; }
+        .deepseek-fab { background-color: #007bff; border: none; border-radius: 50%; width: 60px; height: 60px; cursor: pointer; transition: transform 0.2s; }
+        .deepseek-fab:hover { transform: scale(1.1); }
+        .chat-container { display: none; width: 350px; height: 500px; background: #fff; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); overflow: hidden; }
+        .chat-container.active { display: block; }
+        .chat-header { background: linear-gradient(90deg, #007bff, #0056b3); color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .chat-body { display: flex; flex-direction: column; height: calc(100% - 60px); }
+        .chat-messages { flex-grow: 1; padding: 15px; overflow-y: auto; background: #fafafa; }
+        .message { margin-bottom: 12px; display: flex; flex-direction: column; max-width: 80%; }
+        .bot-message { align-items: flex-start; }
+        .user-message { align-items: flex-end; }
+        .bot-message .message-content { background: #e9ecef; border-radius: 8px; padding: 10px; color: #333; }
+        .user-message .message-content { background: #007bff; border-radius: 8px; padding: 10px; color: white; }
+        .message-timestamp { font-size: 0.75em; color: #777; margin-top: 2px; }
+        .thinking-message .message-content { background: #f8f9fa; color: #555; font-style: italic; display: flex; align-items: center; }
+        .thinking-indicator { display: inline-block; margin-left: 8px; }
+        .thinking-indicator span { display: inline-block; width: 8px; height: 8px; background: #007bff; border-radius: 50%; margin-right: 4px; animation: pulse 0.8s infinite alternate; }
+        .thinking-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .thinking-indicator span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes pulse { to { transform: scale(1.2); opacity: 0.7; } }
+        .message-input-container { display: flex; padding: 10px; border-top: 1px solid #ddd; background: #fff; }
+        .message-input { flex-grow: 1; border: 1px solid #ccc; border-radius: 5px; padding: 6px; }
+        .btn-send { background: #007bff; color: white; border: none; border-radius: 5px; padding: 6px 12px; margin-left: 8px; transition: background 0.2s; }
+        .btn-send:hover { background: #0056b3; }
+    </style>
 </head>
 <body>
+    <!-- CSRF Token for AJAX -->
+    {% csrf_token %}
+
     <!-- Navigation Bar -->
-    <nav class="navbar navbar-expand-lg">
+    <nav class="navbar navbar-expand-lg bg-light">
         <div class="container">
             <a class="navbar-brand" href="{% url 'youtubeapp:index' %}">
-                <img src="{% static 'youtubeapp/images/deepseek-logo.png' %}" alt="DeepTube Logo" class="me-2">
+                <img src="{% static 'youtubeapp/images/deepseek-logo.png' %}" alt="DeepTube Logo" width="30" class="me-2">
                 DeepTube
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <div class="navbar-nav ms-auto">
-                    <a class="nav-link" href="{% url 'youtubeapp:script_generation' %}">Generate Content</a>
-                </div>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'youtubeapp:script_generation' %}">Generate Content</a>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>
-    
+
     <!-- Main Content -->
-    <div class="content-container">
+    <div class="content-container container my-4">
         {% block content %}{% endblock %}
     </div>
-    
+
     <!-- Footer -->
-    <footer>
+    <footer class="text-center py-3 bg-light">
         <p class="mb-0">© 2025 DeepTube. Powered by xAI Technology.</p>
     </footer>
-    
+
     <!-- Chat Widget -->
     <div class="deepseek-chat-widget">
         <button class="deepseek-fab" id="askDeepSeek">
@@ -51,26 +84,18 @@
         <div class="chat-container" id="chatContainer">
             <div class="chat-header">
                 <div class="d-flex align-items-center">
-                    <img src="{% static 'youtubeapp/images/deepseek-logo.png' %}" alt="DeepSeek" class="chat-logo me-2">
+                    <img src="{% static 'youtubeapp/images/deepseek-logo.png' %}" alt="DeepSeek" width="25" class="me-2">
                     <strong>DeepSeek AI</strong>
                 </div>
-                <button class="close-button" id="closeChat" style="background: none; border: none; color: white; font-size: 28px; cursor: pointer;">×</button>
+                <button class="close-button" id="closeChat" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">×</button>
             </div>
             <div class="chat-body">
                 <div class="chat-messages" id="chatMessages">
                     <div class="message bot-message">
-                        <div class="message-content">Hello! I’m DeepSeek AI, built by xAI. How can I assist you today?</div>
+                        <div class="message-content">Hello! I’m DeepSeek AI, built by xAI. How can I assist you with video content creation today?</div>
                         <div class="message-timestamp">Now</div>
                     </div>
                 </div>
-                
-                <!-- Typing Indicator -->
-                <div class="typing-indicator" id="typingIndicator">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </div>
-                
                 <div class="message-input-container">
                     <input type="text" id="userInput" class="message-input" placeholder="Ask me anything...">
                     <button class="btn-send" id="sendButton">
@@ -80,68 +105,101 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-    
+
     <!-- Chat Script -->
     <script>
     $(document).ready(function() {
-        // Ensure chat is hidden and FAB is visible on page load
-        $('#chatContainer').removeClass('active').hide();
+        const csrfToken = $('[name=csrfmiddlewaretoken]').val();
+
+        // Chat widget toggle
+        $('#chatContainer').hide();
         $('#askDeepSeek').show();
 
-        // Toggle Chat: Open chat and hide FAB
         $('#askDeepSeek').click(function() {
-            $('#chatContainer').addClass('active').slideDown(400);
+            $('#chatContainer').slideDown(300).addClass('active');
             $(this).fadeOut(200);
         });
-        
-        // Toggle Chat: Close chat and show FAB
+
         $('#closeChat').click(function() {
-            $('#chatContainer').removeClass('active').slideUp(400);
+            $('#chatContainer').slideUp(300).removeClass('active');
             $('#askDeepSeek').fadeIn(200);
         });
-        
-        // Message Handling
+
+        // Send message
         $('#sendButton, #userInput').on('click keypress', function(e) {
             if (e.type === 'click' || (e.type === 'keypress' && e.which === 13)) {
                 const message = $('#userInput').val().trim();
-                if (message) {
-                    displayMessage(message, 'user');
-                    $('#userInput').val('');
-                    
-                    $('#typingIndicator').fadeIn(200);
-                    setTimeout(() => {
-                        $('#typingIndicator').fadeOut(200);
-                        setTimeout(() => {
-                            const responses = [
-                                "Analyzing your input...",
-                                "Processing with AI precision...",
-                                "Here’s my response...",
-                                "Let me assist you with that..."
-                            ];
-                            displayMessage(responses[Math.floor(Math.random() * responses.length)], 'bot');
-                        }, 300);
-                    }, 1200);
-                }
+                if (!message) return;
+
+                displayMessage(message, 'user');
+                $('#userInput').val('');
+                displayThinkingMessage();
+                $('#sendButton').prop('disabled', true);
+
+                fetch('/chat/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: JSON.stringify({ message: message })
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        return response.json().then(err => {
+                            throw new Error(err.error || `Server error: ${response.status}`);
+                        });
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    removeThinkingMessage();
+                    displayMessage(data.response, 'bot');
+                })
+                .catch(error => {
+                    removeThinkingMessage();
+                    displayMessage(`Error: ${error.message}`, 'bot');
+                    console.error('Chat error:', error);
+                })
+                .finally(() => {
+                    $('#sendButton').prop('disabled', false);
+                });
             }
         });
-        
+
         function displayMessage(message, sender) {
             const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            const messageElement = $(`
+            const messageHtml = `
                 <div class="message ${sender}-message">
                     <div class="message-content">${message}</div>
                     <div class="message-timestamp">${time}</div>
                 </div>
-            `);
-            $('#chatMessages').append(messageElement);
-            scrollToBottom();
-        }
-        
-        function scrollToBottom() {
+            `;
+            $('#chatMessages').append(messageHtml);
             $('#chatMessages').scrollTop($('#chatMessages')[0].scrollHeight);
+        }
+
+        function displayThinkingMessage() {
+            const thinkingHtml = `
+                <div class="message bot-message thinking-message" id="thinkingMessage">
+                    <div class="message-content">
+                        DeepSeek is thinking...
+                        <span class="thinking-indicator">
+                            <span></span><span></span><span></span>
+                        </span>
+                    </div>
+                    <div class="message-timestamp">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                </div>
+            `;
+            $('#chatMessages').append(thinkingHtml);
+            $('#chatMessages').scrollTop($('#chatMessages')[0].scrollHeight);
+        }
+
+        function removeThinkingMessage() {
+            $('#thinkingMessage').remove();
         }
     });
     </script>
