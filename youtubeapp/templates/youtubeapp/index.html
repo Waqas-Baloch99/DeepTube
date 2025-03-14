@@ -3,12 +3,12 @@
 
 {% block content %}
 <div class="container py-5">
-    <!-- Error Banner (if blocked) -->
-    <div class="row mb-4" id="errorBanner" style="display: none;">
+    <!-- Error Banner -->
+    <div class="row mb-4 {% if error %}show{% endif %}" id="errorBanner">
         <div class="col-12">
             <div class="alert alert-warning alert-dismissible fade show shadow-sm" role="alert">
                 <h4 class="alert-heading">Connection Issue</h4>
-                <p>Sorry, we've encountered a security block. Please try again later or contact support.</p>
+                <p>{{ error|default:"Sorry, we couldn't fetch trends. Please try again later or contact support." }}</p>
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         </div>
@@ -32,12 +32,16 @@
                 <div class="accent-line"></div>
             </div>
             <p class="text-muted mb-3">Explore the latest trending topics to inspire your content!</p>
-            <ul id="trendingTags" class="list-group list-group-flush"></ul>
+            <ul id="trendingTags" class="list-group list-group-flush">
+                {% if sample_data %}
+                    <li class="list-group-item text-muted">Loading sample trends...</li>
+                {% endif %}
+            </ul>
             <div class="d-flex justify-content-between align-items-center mt-4">
                 <button class="btn btn-deepseek glow-effect" id="refreshTags">
                     <i class="fas fa-sync-alt me-2"></i> Refresh Trends
                 </button>
-                <span class="text-muted small" id="lastUpdated">Last updated: just now</span>
+                <span class="text-muted small" id="lastUpdated">Last updated: {{ last_updated }}</span>
             </div>
         </div>
     </div>
@@ -63,176 +67,142 @@
                     <div class="accent-line"></div>
                 </div>
                 <p class="text-muted">Track performance metrics and gain actionable insights from your content.</p>
-                <button class="btn btn-deepseek glow-effect">
-                    <i class="fas fa-chart-line me-2"></i> View Analytics
+                <button class="btn btn-deepseek glow-effect" disabled>
+                    <i class="fas fa-chart-line me-2"></i> Coming Soon
                 </button>
             </div>
         </div>
     </div>
+
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<!-- FontAwesome Icons -->
-<script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+<!-- FontAwesome Icons (Fixed CDN URL) -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" 
+      integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" 
+      crossorigin="anonymous" 
+      referrerpolicy="no-referrer" />
 
 <script>
-$(document).ready(function() {
-    // Sample trending tags with more variety
-    let trendingTags = [
-        {name: '#AIRevolution', count: 2543, growth: '+12%'},
-        {name: '#VideoContent', count: 1872, growth: '+8%'},
-        {name: '#TechTrends', count: 1654, growth: '+15%'},
-        {name: '#SaaS2025', count: 1432, growth: '+5%'},
-        {name: '#DeepSeek', count: 2105, growth: '+20%'}
-    ];
+document.addEventListener('DOMContentLoaded', () => {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+    const trendingTagsContainer = document.getElementById('trendingTags');
+    const lastUpdatedElement = document.getElementById('lastUpdated');
 
-    function updateTrendingTags(simulateError = false) {
-        if (simulateError) {
-            $('#errorBanner').slideDown();
-            $('#trendingTags').html('<li class="list-group-item text-muted">Unable to load trends</li>');
+    // Initial trends from backend context
+    let initialTrends = JSON.parse(document.getElementById('trends-data')?.textContent || '[]');
+    renderTrends(initialTrends);
+
+    // Render trends dynamically
+    function renderTrends(trends) {
+        if (!trends || trends.length === 0) {
+            trendingTagsContainer.innerHTML = '<li class="list-group-item text-muted">No trends available</li>';
             return;
         }
 
-        let tagsHtml = trendingTags.map(tag => `
+        const tagsHtml = trends.map(tag => `
             <li class="list-group-item d-flex justify-content-between align-items-center tag-item rounded-3 mb-2">
-                <span class="tag-name fw-medium">${tag.name}</span>
+                <span class="tag-name fw-medium">${escapeHtml(tag.name)}</span>
                 <div>
-                    <span class="badge bg-deepseek-accent me-2">${tag.count} posts</span>
+                    <span class="badge bg-deepseek-accent me-2">${tag.count} interest</span>
                     <span class="badge bg-success">${tag.growth}</span>
                 </div>
             </li>
         `).join('');
-        $('#trendingTags').html(tagsHtml);
-        $('#lastUpdated').text(`Last updated: ${new Date().toLocaleTimeString()}`);
+        trendingTagsContainer.innerHTML = tagsHtml;
     }
 
-    // Initial load
-    updateTrendingTags();
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
 
-    // Refresh button with animation and error simulation
-    $('#refreshTags').click(function() {
-        $(this).addClass('rotating').prop('disabled', true);
+    // Fetch fresh trends on refresh
+    async function refreshTrends() {
+        try {
+            const response = await fetch('{% url "youtubeapp:index" %}', {
+                method: 'GET',
+                headers: { 'X-CSRFToken': csrfToken }
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error ${response.status}`);
+            }
+            const data = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(data, 'text/html');
+            const trendsScript = doc.querySelector('#trends-data');
+            const newTrends = trendsScript ? JSON.parse(trendsScript.textContent) : [];
+            const newLastUpdated = doc.querySelector('#lastUpdated')?.textContent || 'Last updated: just now';
+
+            renderTrends(newTrends);
+            lastUpdatedElement.textContent = newLastUpdated;
+
+            if (!newTrends.length) {
+                showErrorBanner('No trends available at this time');
+            }
+        } catch (error) {
+            console.error('Trend refresh error:', error);
+            showErrorBanner('Failed to refresh trends. Please try again.');
+        }
+    }
+
+    // Error banner handling
+    function showErrorBanner(message) {
+        const errorBanner = document.getElementById('errorBanner');
+        errorBanner.querySelector('p').textContent = message;
+        errorBanner.style.display = 'block';
+    }
+
+    // Refresh button with animation
+    const refreshButton = document.getElementById('refreshTags');
+    refreshButton.addEventListener('click', async () => {
+        refreshButton.classList.add('rotating');
+        refreshButton.disabled = true;
+        await refreshTrends();
         setTimeout(() => {
-            // Simulate 10% chance of error (like Cloudflare block)
-            const simulateError = Math.random() < 0.1;
-            updateTrendingTags(simulateError);
-            $(this).removeClass('rotating').prop('disabled', false);
+            refreshButton.classList.remove('rotating');
+            refreshButton.disabled = false;
         }, 1000);
     });
 
     // Interactive effects
-    $(document).on('mouseenter', '.tag-item', function() {
-        $(this).addClass('highlight shadow-sm');
-    }).on('mouseleave', '.tag-item', function() {
-        $(this).removeClass('highlight shadow-sm');
+    trendingTagsContainer.addEventListener('mouseover', (e) => {
+        const tagItem = e.target.closest('.tag-item');
+        if (tagItem) tagItem.classList.add('highlight', 'shadow-sm');
     });
-
-    $(document).on('click', '.tag-name', function() {
-        const tag = $(this).text();
-        alert(`Explore content for ${tag}`);
+    trendingTagsContainer.addEventListener('mouseout', (e) => {
+        const tagItem = e.target.closest('.tag-item');
+        if (tagItem) tagItem.classList.remove('highlight', 'shadow-sm');
+    });
+    trendingTagsContainer.addEventListener('click', (e) => {
+        const tagName = e.target.closest('.tag-name');
+        if (tagName) {
+            alert(`Explore content for ${tagName.textContent}`);
+        }
     });
 
     // Feature card hover effect
-    $('.feature-card').hover(
-        function() { $(this).addClass('shadow-lg').css('transform', 'translateY(-5px)'); },
-        function() { $(this).removeClass('shadow-lg').css('transform', 'translateY(0)'); }
-    );
+    document.querySelectorAll('.feature-card').forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            card.classList.add('shadow-lg');
+            card.style.transform = 'translateY(-5px)';
+        });
+        card.addEventListener('mouseleave', () => {
+            card.classList.remove('shadow-lg');
+            card.style.transform = 'translateY(0)';
+        });
+    });
 
     // Dismiss error banner
-    $('#errorBanner .btn-close').click(function() {
-        $('#errorBanner').slideUp();
+    document.querySelector('#errorBanner .btn-close')?.addEventListener('click', () => {
+        document.getElementById('errorBanner').style.display = 'none';
     });
 });
 </script>
 
 <!-- Custom Styles -->
-<style>
-:root {
-    --deepseek-primary: #3b82f6;
-    --deepseek-accent: #8b5cf6;
-    --deepseek-border: rgba(255, 255, 255, 0.1);
-    --deepseek-glow: rgba(59, 130, 246, 0.3);
-}
 
-.text-gradient {
-    background: linear-gradient(135deg, var(--deepseek-primary), var(--deepseek-accent));
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.glass-effect {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(15px);
-    border: 1px solid var(--deepseek-border);
-    transition: all 0.3s ease;
-}
-
-.accent-line {
-    width: 50px;
-    height: 3px;
-    background: linear-gradient(90deg, var(--deepseek-primary), var(--deepseek-accent));
-    border-radius: 2px;
-    margin: 0.5rem 0;
-}
-
-.btn-deepseek {
-    background: linear-gradient(135deg, var(--deepseek-primary), var(--deepseek-accent));
-    border: none;
-    color: white;
-    padding: 0.75rem 1.5rem;
-    transition: all 0.3s ease;
-}
-
-.btn-deepseek:hover {
-    box-shadow: 0 0 15px var(--deepseek-glow);
-    transform: translateY(-2px);
-    color: white;
-}
-
-.tag-item {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--deepseek-border);
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-
-.tag-item.highlight {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: var(--deepseek-primary);
-}
-
-.tag-name:hover {
-    color: var(--deepseek-primary);
-}
-
-.feature-card {
-    min-height: 200px;
-    transition: all 0.3s ease;
-}
-
-.rotating {
-    animation: spin 1s linear infinite;
-}
-
-.glow-effect {
-    box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-#trendingTags::-webkit-scrollbar {
-    width: 8px;
-}
-
-#trendingTags::-webkit-scrollbar-thumb {
-    background: var(--deepseek-primary);
-    border-radius: 4px;
-}
-</style>
-<link rel="stylesheet" href="{% static 'youtubeapp/css/index.css' %}">
 {% endblock %}
