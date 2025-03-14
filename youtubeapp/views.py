@@ -1,167 +1,270 @@
+# views.py
 from django.http import JsonResponse
 from django.shortcuts import render
+from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+from django.core.cache import cache
 import logging
 import json
 import os
+from datetime import datetime, timedelta
 from groq import Groq
-from django.core.cache import cache
+from pytrends.request import TrendReq
 
-# Configure logging
 logger = logging.getLogger(__name__)
 
+# Constants
+CACHE_TIMEOUT = 3600  # 1 hour in seconds
+HISTORY_TIMEOUT = 86400  # 1 day in seconds
+TREND_TIMEFRAME = 'today 3-m'
+MAX_TRENDS = 5
+
 def get_groq_client():
-    """Initialize and return Groq client."""
+    """Initialize Groq client with API key validation."""
     api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
-        logger.error("GROQ_API_KEY environment variable is not set")
-        raise ValueError("GROQ_API_KEY is not configured")
+        logger.error("GROQ_API_KEY not found in environment variables")
+        raise ValueError("GROQ_API_KEY is required")
     return Groq(api_key=api_key)
 
+def get_google_trends():
+    """Fetch and process Google Trends data."""
+    try:
+        pytrends = TrendReq(hl='en-US', tz=360)
+        daily_trends = pytrends.today_searches(pn='US')
+        
+        if daily_trends.empty:
+            logger.warning("No trends returned from Google Trends")
+            return []
+
+        pytrends.build_payload(
+            kw_list=list(daily_trends[:MAX_TRENDS]),
+            cat=0,
+            timeframe=TREND_TIMEFRAME,
+            geo='US'
+        )
+        interest_data = pytrends.interest_over_time()
+        
+        trends = [
+            {
+                'name': trend,
+                'count': int(interest_data[trend].mean()),
+                'growth': f"+{int(interest_data[trend].pct_change().mean() * 100)}%"
+            }
+            for trend in daily_trends[:MAX_TRENDS * 2] 
+            if trend in interest_data.columns
+        ]
+        return trends[:MAX_TRENDS]
+    
+    except Exception as e:
+        logger.error(f"Failed to fetch Google Trends: {str(e)}")
+        return []
+
 def index(request):
-    """Render the homepage."""
+    """Render homepage with AI features and trending topics."""
+    context = {
+        'ai_model': 'DeepSeek-R1',
+        'features': [
+            "AI-Powered Script Generation",
+            "Trend-Driven Content Creation",
+            "Audience Engagement Analytics",
+            "Cross-Platform Optimization"
+        ],
+        'trends': [],
+        'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M'),
+    }
+    
+    trends = cache.get('google_trends')
+    if trends is None:
+        trends = get_google_trends()
+        cache.set('google_trends', trends, CACHE_TIMEOUT)
+    
+    context['trends'] = trends
+    context['sample_data'] = not bool(trends)
+    
     if not request.session.session_key:
         request.session.create()
-    return render(request, 'youtubeapp/index.html')
+    
+    return render(request, 'youtubeapp/index.html', context)
 
 def script_generation(request):
-    """Render the script generation page."""
+    """Render script generation interface."""
+    context = {
+        'model_version': 'DeepSeek-R1-Enhanced',
+        'supported_features': ['music_recommendations', 'seo_optimization']
+    }
     if not request.session.session_key:
         request.session.create()
-    return render(request, 'youtubeapp/script_generation.html')
-def chat_with_deepseek(request):
-    """Handle chat requests with Groq API for assistance only."""
-    if request.method != 'POST':
-        logger.warning("Invalid request method received")
-        return JsonResponse({'error': 'Invalid request method'}, status=400)
+    return render(request, 'youtubeapp/script_generation.html', context)
 
-    try:
-        data = json.loads(request.body)
-        user_message = data.get('message', '').strip()
-        if not user_message:
-            logger.warning("No message provided in request")
-            return JsonResponse({'error': 'No message provided'}, status=400)
-
-        logger.info(f"Received message: {user_message}")
-
-        if not request.session.session_key:
-            request.session.create()
-        session_key = request.session.session_key
-
-        # Use cache for chat history
-        chat_history = cache.get(session_key, [])
-        chat_history.append({"role": "user", "content": user_message})
-        if len(chat_history) > 10:
-            chat_history = chat_history[-10:]
-        cache.set(session_key, chat_history, timeout=3600)
-
-        client = get_groq_client()
-        logger.info("Groq client initialized successfully")
-
-        messages = [
-            {
-                "role": "system",
-                "content": "You are DeepSeek AI, a helpful assistant focused on video content creation and YouTube strategy. Provide assistance and answers only. If asked about generating a script, direct the user to the script generation page without generating it here. Use the chat history for context-aware responses."
-            }
-        ] + chat_history
-
-        # Check for script generation request
-        if "generate script" in user_message.lower() or "script generation" in user_message.lower():
-            response = "For script generation, please visit the 'Generate Content' page by clicking the link in the navigation bar!"
-            chat_history.append({"role": "assistant", "content": response})
-            cache.set(session_key, chat_history, timeout=3600)
-            return JsonResponse({'response': response})
-
-        chat_completion = client.chat.completions.create(
-            messages=messages,
-            model="deepseek-r1-distill-llama-70b",  # Specified model
-            temperature=0.3,
-            max_tokens=1000,
-        )
-
-        response = chat_completion.choices[0].message.content
-        logger.info("Groq API call successful")
-
-        chat_history.append({"role": "assistant", "content": response})
-        cache.set(session_key, chat_history, timeout=3600)
-
-        return JsonResponse({'response': response})
-
-    except json.JSONDecodeError as e:
-        logger.error(f"Invalid JSON in request: {str(e)}")
-        return JsonResponse({'error': 'Invalid JSON format'}, status=400)
-    except ValueError as e:
-        logger.error(f"Configuration error: {str(e)}")
-        return JsonResponse({'error': str(e)}, status=500)
-    except Exception as e:
-        logger.error(f"Unexpected error in chat_with_groq: {str(e)}", exc_info=True)
-        return JsonResponse({'error': 'An unexpected error occurred. Please try again.'}, status=500)
-
+@csrf_exempt
+@require_http_methods(["POST"])
 def generate_script(request):
-    """Generate a video script using the Groq API."""
-    if request.method != 'POST':
-        logger.warning("Invalid request method received")
-        return JsonResponse({'error': 'Invalid request method'}, status=400)
-
+    """Generate YouTube video script using DeepSeek-R1."""
     try:
-        data = json.loads(request.body)
+        if not request.body:
+            logger.warning("Received empty request body")
+            return JsonResponse({'error': 'Request body is empty'}, status=400)
+
+        try:
+            data = json.loads(request.body)
+        except json.JSONDecodeError:
+            logger.warning("Invalid JSON in request body")
+            return JsonResponse({'error': 'Invalid JSON format'}, status=400)
+
         topic = data.get('topic', '').strip()
-        length = data.get('length', '')
-        tone = data.get('tone', '')
-        audience = data.get('audience', '')
-        broll = data.get('broll', False)
-        music = data.get('music', False)
-        cta = data.get('cta', False)
+        if not topic:
+            logger.warning("No topic provided in request")
+            return JsonResponse({'error': 'Topic is required'}, status=400)
 
-        if not topic or not length or not tone:
-            logger.warning("Missing required fields in script generation request")
-            return JsonResponse({'error': 'Topic, length, and tone are required'}, status=400)
+        keywords = data.get('keywords', '').strip()
+        music = bool(data.get('music', False))
 
-        logger.info(f"Generating script for topic: {topic}, length: {length}, tone: {tone}")
-
+        logger.info(f"Generating script for topic: {topic}")
         client = get_groq_client()
-        logger.info("Groq client initialized successfully")
 
         prompt = f"""
-        You are DeepSeek AI, an expert in video content creation. Generate a detailed YouTube video script with the following details:
-        - Topic: {topic}
-        - Length: {length} (Short: 100-300 words, Medium: 500-1000 words, Long: 1000+ words)
-        - Tone: {tone} (adapt vocabulary and style accordingly)
-        - Target Audience: {audience or 'General audience'} (tailor content to their interests and knowledge level)
-        - Include B-roll suggestions: {broll} (provide 2-3 specific, relevant examples per section if true)
-        - Include Music recommendations: {music} (suggest mood-appropriate tracks or genres if true)
-        - Include Call-to-Action: {cta} (craft a compelling, audience-specific CTA if true)
-        - Create a Video Description that includes relevant tags (e.g., #tech, #education)
-
-        Format the script with clear sections:
-        1. [Opening Hook] - A 15-30 second attention-grabbing intro with a strong hook
-        2. [Main Content] - Break into 2-3 subsections with clear transitions; include optional B-roll
-        3. [Conclusion] - A concise wrap-up with optional CTA and music suggestions
-        4. [Video Description] - Include a 2-3 sentence summary, tags, and relevant links
+        [DeepSeek-R1 Instruction Set]
+        ROLE: Elite YouTube Content Architect
+        TASK: Generate high-performance video script
+        FORMAT: Structured YouTube blueprint
         
-        Ensure the script is engaging, concise, and matches the specified tone and length.
+        CONTENT PARAMETERS:
+        - Primary Topic: {topic}
+        - Secondary Keywords: {keywords or 'auto-generated'}
+        - Target Metrics: Retention >70%, CTR >8%
+        - Music Integration: {'Enabled' if music else 'Disabled'}
+        
+        OUTPUT REQUIREMENTS:
+        1. TITLE: SEO-optimized (<100 chars), include primary keyword
+        2. HOOK (0:00-0:30): Viral potential opener
+        3. INTRO (0:30-1:00): Value proposition + agenda
+        4. MAIN SECTIONS (3-4 parts):
+           - Clear timestamps
+           - Visual transition cues
+           - Engagement triggers
+        5. CONCLUSION: CTA + retention loop
+        6. DESCRIPTION: 
+           - First 150 chars: Search-optimized
+           - Full summary: 500 chars max
+           - Hashtags: 5-8 trending
+           - Timestamp markers
+           - Discussion prompts
         """
 
-        chat_completion = client.chat.completions.create(
+        system_prompt = """
+        You are DeepSeek-R1, an advanced AI content architect for YouTube.
+        Optimize scripts for viewer retention and engagement using viral patterns
+        and platform algorithms. Use a professional yet accessible tone.
+        """
+
+        response = client.chat.completions.create(
             messages=[
-                {"role": "system", "content": "You are DeepSeek AI, an expert in video content creation."},
+                {"role": "system", "content": system_prompt},
                 {"role": "user", "content": prompt}
             ],
-            model="deepseek-r1-distill-llama-70b",  # Specified model
-            temperature=0.3,
-            max_tokens=1500,
+            model="deepseek-r1-distill-llama-70b",
+            temperature=0.6,
+            max_tokens=2500,
+            top_p=0.9,
         )
 
-        script = chat_completion.choices[0].message.content
-        logger.info("Script generation successful")
+        script_data = {
+            'id': int(datetime.now().timestamp()),
+            'script': response.choices[0].message.content,
+            'topic': topic,
+            'created_at': datetime.now().isoformat(),
+            'metadata': {
+                'model': 'DeepSeek-R1',
+                'version': '1.2.1',
+                'music_enabled': music,
+            }
+        }
 
-        return JsonResponse({'script': script})
+        session_key = request.session.session_key
+        history = cache.get(f"script_history_{session_key}", [])
+        cache.set(f"script_history_{session_key}", [script_data] + history[:4], HISTORY_TIMEOUT)
 
-    except json.JSONDecodeError as e:
-        logger.error(f"Invalid JSON in request: {str(e)}")
-        return JsonResponse({'error': 'Invalid JSON format'}, status=400)
+        return JsonResponse({
+            'script': script_data['script'],
+            'metadata': script_data['metadata']
+        })
+
     except ValueError as e:
         logger.error(f"Configuration error: {str(e)}")
-        return JsonResponse({'error': str(e)}, status=500)
+        return JsonResponse({'error': 'Server configuration issue'}, status=500)
     except Exception as e:
-        logger.error(f"Unexpected error in generate_script: {str(e)}", exc_info=True)
-        return JsonResponse({'error': 'An unexpected error occurred. Please try again.'}, status=500)
+        logger.error(f"Script generation failed: {str(e)}")
+        return JsonResponse({'error': 'Script generation failed'}, status=500)
+
+@require_http_methods(["GET"])
+def get_script_history(request):
+    """Retrieve user's script generation history."""
+    session_key = request.session.session_key or ""
+    history = cache.get(f"script_history_{session_key}", [])
+    return JsonResponse({
+        'history': [
+            {
+                'id': item['id'],
+                'preview': item['script'][:75],
+                'topic': item['topic'],
+                'created_at': item['created_at']
+            }
+            for item in history
+        ]
+    })
+
+@require_http_methods(["GET"])
+def get_script(request, script_id):
+    """Retrieve a specific generated script by ID."""
+    session_key = request.session.session_key or ""
+    history = cache.get(f"script_history_{session_key}", [])
+    script = next((item for item in history if item['id'] == int(script_id)), None)
+    if script:
+        return JsonResponse(script)
+    return JsonResponse({'error': 'Script not found'}, status=404)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def clear_script_history(request):
+    """Clear user's script generation history."""
+    session_key = request.session.session_key or ""
+    cache.delete(f"script_history_{session_key}")
+    return JsonResponse({'status': 'History cleared'})
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def chat_with_deepseek(request):
+    """Provide YouTube strategy advice via DeepSeek-R1."""
+    try:
+        data = json.loads(request.body)
+        query = data.get('message', '').strip()
+        if not query:
+            return JsonResponse({'error': 'Message is required'}, status=400)
+
+        client = get_groq_client()
+        response = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "system",
+                    "content": """
+                    You are DeepSeek-R1 Assistant, a YouTube strategy expert.
+                    For script generation, redirect to the dedicated tool.
+                    """
+                },
+                {"role": "user", "content": query}
+            ],
+            model="deepseek-r1-distill-llama-70b",
+            temperature=0.4,
+            max_tokens=800
+        )
+
+        return JsonResponse({
+            'response': response.choices[0].message.content,
+            'model': 'DeepSeek-R1',
+            'timestamp': datetime.now().isoformat()
+        })
+
+    except Exception as e:
+        logger.error(f"Chat error: {str(e)}")
+        return JsonResponse({'error': 'Chat service unavailable'}, status=503)
