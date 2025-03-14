@@ -12,38 +12,8 @@
 
     <!-- jQuery & FontAwesome -->
     <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous">
-
-    <style>
-        /* Custom styles for chat widget */
-        .deepseek-chat-widget { position: fixed; bottom: 20px; right: 20px; z-index: 1000; }
-        .deepseek-fab { background-color: #007bff; border: none; border-radius: 50%; width: 60px; height: 60px; cursor: pointer; transition: transform 0.2s; }
-        .deepseek-fab:hover { transform: scale(1.1); }
-        .chat-container { display: none; width: 350px; height: 500px; background: #fff; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); overflow: hidden; }
-        .chat-container.active { display: block; }
-        .chat-header { background: linear-gradient(90deg, #007bff, #0056b3); color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .chat-body { display: flex; flex-direction: column; height: calc(100% - 60px); }
-        .chat-messages { flex-grow: 1; padding: 15px; overflow-y: auto; background: #fafafa; }
-        .message { margin-bottom: 12px; display: flex; flex-direction: column; max-width: 80%; }
-        .bot-message { align-items: flex-start; }
-        .user-message { align-items: flex-end; }
-        .bot-message .message-content { background: #e9ecef; border-radius: 8px; padding: 10px; color: #333; }
-        .user-message .message-content { background: #007bff; border-radius: 8px; padding: 10px; color: white; }
-        .message-timestamp { font-size: 0.75em; color: #777; margin-top: 2px; }
-        .thinking-message .message-content { background: #f8f9fa; color: #555; font-style: italic; display: flex; align-items: center; }
-        .thinking-indicator { display: inline-block; margin-left: 8px; }
-        .thinking-indicator span { display: inline-block; width: 8px; height: 8px; background: #007bff; border-radius: 50%; margin-right: 4px; animation: pulse 0.8s infinite alternate; }
-        .thinking-indicator span:nth-child(2) { animation-delay: 0.2s; }
-        .thinking-indicator span:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes pulse { to { transform: scale(1.2); opacity: 0.7; } }
-        .message-input-container { display: flex; padding: 10px; border-top: 1px solid #ddd; background: #fff; }
-        .message-input { flex-grow: 1; border: 1px solid #ccc; border-radius: 5px; padding: 6px; }
-        .btn-send { background: #007bff; color: white; border: none; border-radius: 5px; padding: 6px 12px; margin-left: 8px; transition: background 0.2s; }
-        .btn-send:hover { background: #0056b3; }
-        .btn-voice { background: #28a745; color: white; border: none; border-radius: 5px; padding: 6px 12px; margin-left: 8px; transition: background 0.2s; }
-        .btn-voice:hover { background: #218838; }
-        .btn-voice.listening { background: #dc3545; }
-    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script src="{% static 'youtubeapp/js/fontawesome.min.js' %}"></script>
 </head>
 <body>
     <!-- CSRF Token for AJAX -->
@@ -62,6 +32,9 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
+                        <a class="nav-link" href="{% url 'youtubeapp:index' %}">Home</a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link" href="{% url 'youtubeapp:script_generation' %}">Generate Content</a>
                     </li>
                 </ul>
@@ -76,7 +49,7 @@
 
     <!-- Footer -->
     <footer class="text-center py-3 bg-light">
-        <p class="mb-0">© 2025 DeepTube. Powered by xAI Technology.</p>
+        <p class="mb-0">© 2025 DeepTube.</p>
     </footer>
 
     <!-- Chat Widget -->
@@ -90,12 +63,12 @@
                     <img src="{% static 'youtubeapp/images/deepseek-logo.png' %}" alt="DeepSeek" width="25" class="me-2">
                     <strong>DeepSeek AI</strong>
                 </div>
-                <button class="close-button" id="closeChat" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">×</button>
+                <button class="close-button" id="closeChat">×</button>
             </div>
             <div class="chat-body">
                 <div class="chat-messages" id="chatMessages">
                     <div class="message bot-message">
-                        <div class="message-content">Hello! I’m DeepSeek AI, built by xAI. How can I assist you with video content creation today?</div>
+                        <div class="message-content">Hello! I’m DeepSeek AI. How can I assist you with video content creation today?</div>
                         <div class="message-timestamp">Now</div>
                     </div>
                 </div>
