@@ -1,0 +1,140 @@
+{% extends 'youtubeapp/base.html' %}
+{% load static %}
+
+{% block title %}Home - DeepTube{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Hero Section -->
+    <div class="row mb-5 text-center align-items-center">
+        <div class="col-lg-8 mx-auto">
+            <div class="glass-effect p-5 rounded-4 shadow-sm">
+                <h1 class="display-3 fw-bold">Welcome to <span class="text-gradient">DeepTube</span></h1>
+                <p class="lead text-muted mt-3">Your all-in-one AI-powered companion for creativity, insights, and assistance.</p>
+                <div class="mt-4">
+                    <a href="{% url 'youtubeapp:index' %}" class="btn btn-primary glow-effect me-3">
+                        <i class="fas fa-comment-dots me-2"></i> Start Chatting
+                    </a>
+                    <a href="{% url 'youtubeapp:youtube_analytics' %}" class="btn btn-outline-primary glow-effect">
+                        <i class="fas fa-chart-line me-2"></i> Explore Analytics
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <div class="card glass-effect p-4 rounded-4 shadow-sm h-100">
+                <div class="section-header mb-3">
+                    <h4 class="fw-bold"><i class="fas fa-robot me-2"></i>AI Chat</h4>
+                    <div class="accent-line"></div>
+                </div>
+                <p class="text-muted">Ask DeepSeek AI anything—coding, research, or daily tasks—with voice or text input.</p>
+                <a href="{% url 'youtubeapp:index' %}" class="btn btn-link p-0 mt-2">Try it now <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card glass-effect p-4 rounded-4 shadow-sm h-100">
+                <div class="section-header mb-3">
+                    <h4 class="fw-bold"><i class="fas fa-chart-line me-2"></i>YouTube Analytics</h4>
+                    <div class="accent-line"></div>
+                </div>
+                <p class="text-muted">Discover trending videos and insights to boost your YouTube strategy.</p>
+                <a href="{% url 'youtubeapp:youtube_analytics' %}" class="btn btn-link p-0 mt-2">Explore analytics <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card glass-effect p-4 rounded-4 shadow-sm h-100">
+                <div class="section-header mb-3">
+                    <h4 class="fw-bold"><i class="fas fa-magic me-2"></i>Content Generation</h4>
+                    <div class="accent-line"></div>
+                </div>
+                <p class="text-muted">Generate scripts and ideas effortlessly with AI-powered tools.</p>
+                <a href="{% url 'youtubeapp:script_generation' %}" class="btn btn-link p-0 mt-2">Get started <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- About Section -->
+    <div class="row text-center mb-5">
+        <div class="col-12">
+            <div class="glass-effect p-4 rounded-4 shadow-sm">
+                <h2 class="fw-bold">Why DeepTube?</h2>
+                <p class="text-muted mt-3 mx-auto" style="max-width: 600px;">
+                    DeepTube combines cutting-edge AI with practical tools to help you create, analyze, and succeed—whether you're a content creator or just curious.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="row text-center">
+        <div class="col-12">
+            <div class="glass-effect p-4 rounded-4 shadow-sm">
+                <p class="mb-3">Have a question? Chat with DeepSeek AI now!</p>
+                <button class="btn btn-primary glow-effect" id="openChatBtn">
+                    <i class="fas fa-robot me-2"></i> Ask DeepSeek
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.glass-effect {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.text-gradient {
+    background: linear-gradient(45deg, #6a11cb, #2575fc);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+.glow-effect {
+    box-shadow: 0 0 15px rgba(66, 135, 245, 0.4);
+    transition: all 0.3s ease;
+}
+.glow-effect:hover {
+    box-shadow: 0 0 20px rgba(66, 135, 245, 0.6);
+    transform: translateY(-2px);
+}
+.accent-line {
+    width: 50px;
+    height: 3px;
+    background: var(--primary-blue);
+    margin-top: 8px;
+    border-radius: 3px;
+}
+.card {
+    transition: transform 0.3s ease;
+}
+.card:hover {
+    transform: translateY(-5px);
+}
+.btn-link {
+    color: var(--primary-blue);
+}
+.btn-link:hover {
+    color: var(--hover-blue);
+    text-decoration: underline;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Open chat widget when clicking the CTA button
+    const openChatBtn = document.getElementById('openChatBtn');
+    openChatBtn.addEventListener('click', () => {
+        document.getElementById('askDeepSeek').click();
+    });
+});
+</script>
+{% endblock %}
