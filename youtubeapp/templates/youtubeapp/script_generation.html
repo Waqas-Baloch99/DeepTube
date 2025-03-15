@@ -4,37 +4,32 @@
 {% block extra_css %}
 <style>
 :root {
-    --deepseek-primary: #7c4dff;
-    --deepseek-accent: #00e5ff;
+    --primary-blue: #4287f5;
+    --light-blue: #f0f6ff;
+    --hover-blue: #2d6ed9;
     --deepseek-border: rgba(255, 255, 255, 0.2);
-    --deepseek-glow: rgba(124, 77, 255, 0.4);
-    --deepseek-text: #ffffff;
-    --deepseek-text-secondary: #bdbdbd;
-    --deepseek-bg: #121212;
-    --deepseek-bg-lighter: #1e1e1e;
-    --deepseek-bg-input: rgba(255, 255, 255, 0.08);
-    --deepseek-success: #00c853;
-    --deepseek-error: #ff1744;
+    --deepseek-glow: rgba(66, 135, 245, 0.4);
 }
 
 body {
-    background: var(--deepseek-bg);
-    color: var(--deepseek-text);
+    background: linear-gradient(135deg, var(--light-blue) 0%, #ffffff 100%);
+    color: #2c3e50;
     overscroll-behavior: none;
     font-family: 'Segoe UI', Arial, sans-serif;
 }
 
 .text-gradient {
-    background: linear-gradient(135deg, var(--deepseek-primary), var(--deepseek-accent));
+    background: linear-gradient(135deg, var(--primary-blue), #00c6ff);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
 .glass-effect {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(12px);
-    border: 1px solid var(--deepseek-border);
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(66, 135, 245, 0.1);
     transition: transform 0.2s ease;
 }
 
@@ -43,29 +38,35 @@ body {
 }
 
 .script-history {
-    max-height: 60vh;
+    max-height: 70vh;
     overflow-y: auto;
     scroll-behavior: smooth;
     scrollbar-width: thin;
-    scrollbar-color: var(--deepseek-primary) var(--deepseek-bg-lighter);
+    scrollbar-color: var(--primary-blue) #f0f6ff;
 }
 
 .history-item {
     transition: all 0.2s ease;
     cursor: pointer;
+    border-left: 3px solid transparent;
 }
 
 .history-item:hover {
-    background: var(--deepseek-bg-input);
-    transform: scale(1.02);
+    background: rgba(66, 135, 245, 0.05);
+    border-left: 3px solid var(--primary-blue);
+}
+
+.history-item.active {
+    background: rgba(66, 135, 245, 0.1);
+    border-left: 3px solid var(--primary-blue);
 }
 
 .skeleton-loader {
     background: linear-gradient(
         90deg,
-        var(--deepseek-bg-lighter) 25%,
-        var(--deepseek-bg-input) 50%,
-        var(--deepseek-bg-lighter) 75%
+        #f0f6ff 25%,
+        #ffffff 50%,
+        #f0f6ff 75%
     );
     background-size: 200% 100%;
     animation: skeleton-loading 1.5s ease-in-out infinite;
@@ -98,24 +99,25 @@ body {
 }
 
 .btn-primary {
-    background: var(--deepseek-primary);
-    border-color: var(--deepseek-primary);
+    background: var(--primary-blue);
+    border-color: var(--primary-blue);
     box-shadow: 0 0 10px var(--deepseek-glow);
 }
 
 .btn-primary:hover {
-    background: var(--deepseek-accent);
-    border-color: var(--deepseek-accent);
+    background: var(--hover-blue);
+    border-color: var(--hover-blue);
+    transform: translateY(-2px);
 }
 
-.form-control.glass-input {
-    background: var(--deepseek-bg-input);
-    border: 1px solid var(--deepseek-border);
-    color: var(--deepseek-text);
+.form-control {
+    border: 2px solid #eef2f7;
+    padding: 0.75rem;
+    transition: all 0.3s;
 }
 
-.form-control.glass-input:focus {
-    border-color: var(--deepseek-primary);
+.form-control:focus {
+    border-color: var(--primary-blue);
     box-shadow: 0 0 5px var(--deepseek-glow);
 }
 
@@ -134,22 +136,56 @@ body {
 
 .loading-content {
     text-align: center;
-    color: var(--deepseek-text);
+    color: #ffffff;
 }
 
 .toast {
     padding: 0.75rem 1.25rem;
     border-radius: 0.5rem;
-    color: var(--deepseek-text);
+    color: #ffffff;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    animation: toastIn 0.3s ease forwards;
+}
+
+@keyframes toastIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.script-content {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.script-text {
+    line-height: 1.6;
+}
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    text-align: center;
+    color: #94a3b8;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid py-4">
+<div class="container py-4">
     <div class="loading-overlay" id="loadingOverlay" style="display: none;">
         <div class="loading-content">
-            <div class="spinner-grow" style="color: var(--deepseek-primary);" role="status"></div>
+            <div class="spinner-grow" style="color: var(--primary-blue);" role="status"></div>
             <p class="h5 mt-3">Generating AI Magic...</p>
         </div>
     </div>
@@ -157,19 +193,22 @@ body {
     <div class="row g-4">
         <!-- History Column -->
         <div class="col-lg-4">
-            <div class="glass-effect p-3 rounded-4 h-100">
-                <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="glass-effect p-4 rounded-4 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-4">
                     <h5 class="mb-0 text-gradient">Recent Scripts</h5>
                     <div class="d-flex gap-2">
-                        <input type="text" id="historySearch" class="form-control glass-input form-control-sm" 
+                        <input type="text" id="historySearch" class="form-control form-control-sm" 
                                placeholder="Search..." style="width: 140px">
-                        <button class="btn btn-sm btn-outline-light" id="clearHistory" title="Clear history">
+                        <button class="btn btn-sm btn-outline-secondary" id="clearHistory" title="Clear history">
                             <i class="fas fa-eraser"></i>
                         </button>
                     </div>
                 </div>
                 <div class="script-history" id="scriptHistory">
-                    <div class="text-center text-muted py-3">Loading history...</div>
+                    <div class="empty-state">
+                        <i class="fas fa-history"></i>
+                        <p>Loading history...</p>
+                    </div>
                 </div>
             </div>
         </div>
@@ -186,22 +225,22 @@ body {
                 </div>
                 
                 <form id="scriptForm" class="needs-validation" novalidate>
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <div class="input-group input-group-lg">
-                            <input type="text" class="form-control glass-input" id="topic" 
+                            <input type="text" class="form-control" id="topic" 
                                    placeholder="Enter video topic (e.g., 'AI Programming')" required>
                             <button class="btn btn-primary" type="submit">
-                                <i class="fas fa-sparkles me-2"></i>Generate
+                                <i class="fas fa-magic me-2"></i>Generate
                             </button>
                         </div>
-                        <div class="invalid-feedback mt-1" style="color: var(--deepseek-error);">
+                        <div class="invalid-feedback mt-1">
                             Please enter a topic.
                         </div>
                     </div>
                     
-                    <div class="row g-3">
+                    <div class="row g-3 mb-4">
                         <div class="col-md-6">
-                            <input type="text" class="form-control glass-input" 
+                            <input type="text" class="form-control" 
                                    id="keywords" placeholder="SEO keywords (e.g., 'python, ai')">
                         </div>
                         <div class="col-md-6">
@@ -214,9 +253,10 @@ body {
                 </form>
 
                 <div class="mt-4" id="scriptOutput">
-                    <div class="glass-effect rounded-4 p-4 text-center">
-                        <i class="fas fa-robot fa-3x text-muted mb-3"></i>
-                        <p class="text-muted">Your AI-generated script will appear here</p>
+                    <div class="empty-state glass-effect rounded-4 p-5">
+                        <i class="fas fa-robot"></i>
+                        <p>Your AI-generated script will appear here</p>
+                        <small class="text-muted">Enter a topic above and click Generate</small>
                     </div>
                 </div>
             </div>
@@ -236,25 +276,43 @@ const showToast = (message, isError = false) => {
     const toast = document.createElement('div');
     toast.className = `toast position-fixed bottom-0 end-0 m-3 ${isError ? 'bg-danger' : 'bg-success'}`;
     toast.style.zIndex = '1050';
-    toast.textContent = message;
+    toast.innerHTML = `
+        <div class="d-flex align-items-center">
+            <i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'} me-2"></i>
+            <span>${message}</span>
+        </div>
+    `;
     document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+    
+    // Animate out after delay
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(20px)';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 };
 
 const copyToClipboard = () => {
     const scriptText = document.querySelector('.script-text')?.innerText || '';
-    navigator.clipboard.writeText(scriptText).then(() => showToast('Copied to clipboard!'));
+    navigator.clipboard.writeText(scriptText)
+        .then(() => showToast('Copied to clipboard!'))
+        .catch(() => showToast('Failed to copy to clipboard', true));
 };
 
 document.addEventListener('DOMContentLoaded', () => {
     const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
     const scriptHistoryContainer = document.getElementById('scriptHistory');
+    let activeHistoryItem = null;
 
     // Load history immediately on page load
     loadScriptHistory();
 
     async function loadScriptHistory() {
-        scriptHistoryContainer.innerHTML = '<div class="text-center text-muted py-3">Loading history...</div>';
+        scriptHistoryContainer.innerHTML = `
+            <div class="empty-state">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Loading history...</p>
+            </div>`;
         try {
             const response = await fetch('/script_history/', {
                 method: 'GET',
@@ -268,14 +326,26 @@ document.addEventListener('DOMContentLoaded', () => {
             renderHistory(data.history || []);
         } catch (error) {
             console.error('History load error:', error);
-            scriptHistoryContainer.innerHTML = '<div class="text-center text-muted py-3">Failed to load history</div>';
+            scriptHistoryContainer.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <p>Failed to load history</p>
+                    <button class="btn btn-sm btn-outline-primary mt-2" onclick="loadScriptHistory()">
+                        <i class="fas fa-redo"></i> Retry
+                    </button>
+                </div>`;
             showToast('Could not load script history', true);
         }
     }
 
     function renderHistory(history) {
         if (!history || history.length === 0) {
-            scriptHistoryContainer.innerHTML = '<div class="text-center text-muted py-3">No scripts generated yet</div>';
+            scriptHistoryContainer.innerHTML = `
+                <div class="empty-state">
+                    <i class="fas fa-file-alt"></i>
+                    <p>No scripts generated yet</p>
+                    <small class="text-muted">Generate your first script above</small>
+                </div>`;
             return;
         }
         const fragment = document.createDocumentFragment();
@@ -296,9 +366,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="script-preview text-muted">${escapeHtml(script.preview || 'No preview available')}</div>
                     <small class="text-muted">${new Date(script.created_at).toLocaleString()}</small>
                 </div>
-                <button class="btn btn-sm btn-link text-danger delete-btn" data-id="${script.id}" title="View script">
-                    <i class="fas fa-eye"></i>
-                </button>
+                <div class="d-flex gap-1">
+                    <button class="btn btn-sm btn-outline-primary view-btn" data-id="${script.id}" title="View script">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    
+                </div>
             </div>
         `;
         return div;
@@ -345,10 +418,11 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const data = await response.json();
-            displayScript(data.script);
+            displayScript(data.script, topic);
             await loadScriptHistory(); // Ensure history updates after generation
             scriptForm.reset();
             scriptForm.classList.remove('was-validated');
+            showToast('Script generated successfully!');
         } catch (error) {
             console.error('Script generation error:', error);
             showToast(`Failed to generate script: ${error.message}`, true);
@@ -357,11 +431,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    function displayScript(script) {
+    function displayScript(script, title = 'Generated Script') {
         document.getElementById('scriptOutput').innerHTML = `
             <div class="script-content position-relative glass-effect p-4 rounded-4">
-                <button class="copy-btn btn btn-sm btn-dark" onclick="copyToClipboard()">
-                    <i class="fas fa-copy"></i>
+                <h5 class="mb-3 text-gradient">${escapeHtml(title)}</h5>
+                <button class="copy-btn btn btn-sm btn-primary" onclick="copyToClipboard()">
+                    <i class="fas fa-copy me-1"></i> Copy
                 </button>
                 <pre class="script-text font-monospace mb-0" style="white-space: pre-wrap;">${escapeHtml(script)}</pre>
             </div>
@@ -378,15 +453,40 @@ document.addEventListener('DOMContentLoaded', () => {
     function filterHistory(query) {
         const items = scriptHistoryContainer.querySelectorAll('.history-item');
         const q = query.toLowerCase();
+        let hasResults = false;
+        
         items.forEach(item => {
             const text = item.textContent.toLowerCase();
-            item.style.display = text.includes(q) ? '' : 'none';
+            const matches = text.includes(q);
+            item.style.display = matches ? '' : 'none';
+            if (matches) hasResults = true;
         });
+        
+        // Show no results message if needed
+        if (!hasResults && items.length > 0) {
+            const noResults = document.createElement('div');
+            noResults.className = 'empty-state';
+            noResults.innerHTML = `
+                <i class="fas fa-search"></i>
+                <p>No matching scripts found</p>
+            `;
+            scriptHistoryContainer.appendChild(noResults);
+        } else {
+            const existingNoResults = scriptHistoryContainer.querySelector('.empty-state');
+            if (existingNoResults && items.length > 0) {
+                existingNoResults.remove();
+            }
+        }
     }
 
     // Clear History
     document.getElementById('clearHistory').addEventListener('click', async () => {
+        if (!confirm('Are you sure you want to clear all script history? This cannot be undone.')) {
+            return;
+        }
+        
         try {
+            showLoading(true);
             const response = await fetch('/clear_script_history/', {
                 method: 'POST',
                 headers: { 'X-CSRFToken': csrfToken }
@@ -397,16 +497,23 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Clear history error:', error);
             showToast('Failed to clear history', true);
+        } finally {
+            showLoading(false);
         }
     });
 
     // History Interactions (View Script)
     function initHistoryInteractions() {
         scriptHistoryContainer.addEventListener('click', async (e) => {
-            const viewBtn = e.target.closest('.delete-btn'); // Reused as "view" button
+            const viewBtn = e.target.closest('.view-btn');
+            const deleteBtn = e.target.closest('.delete-btn');
+            const historyItem = e.target.closest('.history-item');
+            
+            // Handle view button click
             if (viewBtn) {
                 const id = viewBtn.dataset.id;
                 try {
+                    showLoading(true);
                     const response = await fetch(`/script/${id}/`, {
                         method: 'GET',
                         headers: { 'X-CSRFToken': csrfToken }
@@ -414,11 +521,60 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (!response.ok) throw new Error('Script not found');
                     const data = await response.json();
                     if (data.error) throw new Error(data.error);
-                    displayScript(data.script);
+                    
+                    // Update active item
+                    if (activeHistoryItem) {
+                        activeHistoryItem.classList.remove('active');
+                    }
+                    historyItem.classList.add('active');
+                    activeHistoryItem = historyItem;
+                    
+                    displayScript(data.script, data.topic || 'Untitled Script');
                     showToast('Script loaded from history');
                 } catch (error) {
                     console.error('Script fetch error:', error);
                     showToast(`Failed to load script: ${error.message}`, true);
+                } finally {
+                    showLoading(false);
+                }
+            }
+            
+            // Handle delete button click
+            if (deleteBtn) {
+                const id = deleteBtn.dataset.id;
+                if (!confirm('Are you sure you want to delete this script?')) {
+                    return;
+                }
+                
+                try {
+                    showLoading(true);
+                    const response = await fetch(`/script/${id}/delete/`, {
+                        method: 'POST',
+                        headers: { 'X-CSRFToken': csrfToken }
+                    });
+                    if (!response.ok) throw new Error('Failed to delete script');
+                    
+                    // Remove from DOM
+                    historyItem.style.height = `${historyItem.offsetHeight}px`;
+                    setTimeout(() => {
+                        historyItem.style.height = '0';
+                        historyItem.style.opacity = '0';
+                        historyItem.style.padding = '0';
+                        historyItem.style.margin = '0';
+                        setTimeout(() => {
+                            historyItem.remove();
+                            if (scriptHistoryContainer.querySelectorAll('.history-item').length === 0) {
+                                renderHistory([]);
+                            }
+                        }, 300);
+                    }, 10);
+                    
+                    showToast('Script deleted successfully');
+                } catch (error) {
+                    console.error('Script delete error:', error);
+                    showToast(`Failed to delete script: ${error.message}`, true);
+                } finally {
+                    showLoading(false);
                 }
             }
         });
@@ -426,3 +582,4 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 {% endblock %}
+
