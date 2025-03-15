@@ -7,6 +7,6 @@ whitenoise==6.6.0
 python-dotenv==1.0.1  
 groq
 pytrends
-google-api-python-client
+google-auth google-auth-oauthlib google-auth-httplib2 googleapiclient
 
 
