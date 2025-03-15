@@ -1,0 +1,332 @@
+{% extends 'youtubeapp/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Error Banner -->
+    <div class="row mb-4 {% if not error %}d-none{% endif %}" id="errorBanner">
+        <div class="col-12">
+            <div class="alert alert-warning alert-dismissible fade show shadow-sm" role="alert">
+                <h4 class="alert-heading">Data Fetch Issue</h4>
+                <p>{{ error|default:"We're experiencing temporary issues fetching trending videos. Using cached data instead." }}</p>
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logo & Tagline Section -->
+    <div class="row mb-5 text-center">
+        <div class="col-12">
+            <div class="logo-container glass-effect p-4 rounded-4 shadow-sm">
+                <h1 class="display-4 fw-bold">DeepTube <span class="text-gradient">AI Assistant</span></h1>
+                <p class="lead text-muted mt-2">Discover and create engaging content with AI-powered insights</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Trending Videos Section -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="tags-container glass-effect p-4 rounded-4 shadow-sm">
+                <div class="section-header mb-3 d-flex justify-content-between align-items-center">
+                    <h4 class="fw-bold"><i class="fas fa-fire me-2"></i>Trending YouTube Videos</h4>
+                    <select id="regionSelect" class="form-select w-auto">
+                        <option value="US" {% if region_code == 'US' %}selected{% endif %}>United States</option>
+                        <option value="GB" {% if region_code == 'GB' %}selected{% endif %}>United Kingdom</option>
+                        <option value="CA" {% if region_code == 'CA' %}selected{% endif %}>Canada</option>
+                        <option value="AU" {% if region_code == 'AU' %}selected{% endif %}>Australia</option>
+                        <option value="IN" {% if region_code == 'IN' %}selected{% endif %}>India</option>
+                        <option value="JP" {% if region_code == 'JP' %}selected{% endif %}>Japan</option>
+                        <option value="DE" {% if region_code == 'DE' %}selected{% endif %}>Germany</option>
+                        <option value="FR" {% if region_code == 'FR' %}selected{% endif %}>France</option>
+                    </select>
+                </div>
+                <p class="text-muted mb-3">Check out the hottest videos trending right now!</p>
+                <div id="trendingVideos" class="row g-4">
+                    {% if sample_data and not trending_videos %}
+                        <div class="col-12 text-muted">
+                            <i class="fas fa-exclamation-circle me-2"></i>No trending videos available. Check back later.
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-4">
+                    <button class="btn btn-primary glow-effect" id="refreshVideos">
+                        <i class="fas fa-sync-alt me-2"></i> Refresh Videos
+                    </button>
+                    <span class="text-muted small" id="lastUpdated">Last updated: {{ last_updated }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="feature-card glass-effect p-4 rounded-4 shadow-sm h-100">
+                <div class="section-header mb-3">
+                    <h4 class="fw-bold"><i class="fas fa-magic me-2"></i>Generate Content</h4>
+                    <div class="accent-line"></div>
+                </div>
+                <p class="text-muted mb-4">AI-powered tools to create engaging videos, scripts, and social media content effortlessly.</p>
+                <div class="mt-auto">
+                    <a href="{% url 'youtubeapp:script_generation' %}" class="btn btn-primary glow-effect">
+                        <i class="fas fa-magic me-2"></i> Get Started
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="feature-card glass-effect p-4 rounded-4 shadow-sm h-100">
+                <div class="section-header mb-3">
+                    <h4 class="fw-bold"><i class="fas fa-chart-line me-2"></i>Analytics Dashboard</h4>
+                    <div class="accent-line"></div>
+                </div>
+                <p class="text-muted mb-4">Track performance metrics and gain actionable insights from your content.</p>
+                <div class="mt-auto">
+                    <button class="btn btn-primary glow-effect" disabled>
+                        <i class="fas fa-chart-line me-2"></i> Coming Soon
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Video Modal -->
+<div class="modal fade" id="videoModal" tabindex="-1" aria-labelledby="videoModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content glass-effect">
+            <div class="modal-header">
+                <h5 class="modal-title" id="videoModalLabel">Video Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <img id="modalThumbnail" class="img-fluid rounded" alt="Video Thumbnail">
+                    </div>
+                    <div class="col-md-6">
+                        <h6 id="modalTitle" class="fw-medium"></h6>
+                        <p id="modalChannel" class="text-muted small"></p>
+                        <p><strong>Views:</strong> <span id="modalViews"></span></p>
+                        <p><strong>Description:</strong></p>
+                        <p id="modalDescription" class="text-muted"></p>
+                        <a id="modalUrl" href="#" target="_blank" class="btn btn-primary glow-effect mt-2">Watch on YouTube</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Bootstrap JS (required for modal) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- Trending Videos Data Script -->
+{{ trending_videos|json_script:"trending-videos-data" }}
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const trendingVideosContainer = document.getElementById('trendingVideos');
+    const lastUpdatedElement = document.getElementById('lastUpdated');
+    const regionSelect = document.getElementById('regionSelect');
+    const videoModal = new bootstrap.Modal(document.getElementById('videoModal'), {
+        backdrop: true,
+        keyboard: true
+    });
+
+    // Parse initial data with error handling
+    let initialTrendingVideos = [];
+    try {
+        const dataElement = document.getElementById('trending-videos-data');
+        initialTrendingVideos = dataElement ? JSON.parse(dataElement.textContent) : [];
+    } catch (e) {
+        console.error('Error parsing initial videos:', e);
+    }
+    renderTrendingVideos(initialTrendingVideos);
+
+    function renderTrendingVideos(videos) {
+        if (!videos || videos.length === 0) {
+            trendingVideosContainer.innerHTML = `
+                <div class="col-12 text-muted">
+                    <i class="fas fa-info-circle me-2"></i>No videos available at the moment
+                </div>`;
+            return;
+        }
+
+        trendingVideosContainer.innerHTML = videos.map(video => `
+            <div class="col-md-4 col-sm-6 mb-4">
+                <div class="card h-100 shadow-sm hover-scale" data-video='${JSON.stringify(video)}'>
+                    <a href="#" class="video-link">
+                        <img src="${video.thumbnail}" 
+                             class="card-img-top" 
+                             alt="${video.title}"
+                             loading="lazy">
+                    </a>
+                    <div class="card-body">
+                        <h6 class="card-title fw-medium">${video.title}</h6>
+                        <p class="card-text text-muted small">${video.channel}</p>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        // Add click event listeners to video cards
+        document.querySelectorAll('.video-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const videoData = JSON.parse(e.target.closest('.card').dataset.video);
+                showVideoDetails(videoData);
+            });
+        });
+    }
+
+    function showVideoDetails(video) {
+        document.getElementById('modalThumbnail').src = video.thumbnail;
+        document.getElementById('modalTitle').textContent = video.title;
+        document.getElementById('modalChannel').textContent = `Channel: ${video.channel}`;
+        document.getElementById('modalViews').textContent = video.view_count;
+        document.getElementById('modalDescription').textContent = video.description;
+        document.getElementById('modalUrl').href = video.url;
+        videoModal.show();
+    }
+
+    async function updateRegion() {
+        try {
+            const response = await fetch('{% url "youtubeapp:update_region" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ region_code: regionSelect.value })
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const data = await response.json();
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            renderTrendingVideos(data.trending_videos);
+            lastUpdatedElement.textContent = `Last updated: ${new Date().toLocaleString()}`;
+            document.getElementById('errorBanner').classList.add('d-none');
+        } catch (error) {
+            console.error('Region update failed:', error);
+            document.getElementById('errorBanner').classList.remove('d-none');
+            const errorText = document.querySelector('.alert p');
+            if (error.message.includes('invalidRegionCode')) {
+                errorText.textContent = 'Invalid region code selected. Please try a different region.';
+            } else {
+                errorText.textContent = 'Error fetching trending videos. Please try again later.';
+            }
+        }
+    }
+
+    async function refreshVideos() {
+        const refreshBtn = document.getElementById('refreshVideos');
+        refreshBtn.disabled = true;
+        refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Refreshing...';
+
+        try {
+            const response = await fetch('{% url "youtubeapp:update_region" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ region_code: regionSelect.value })
+            });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const data = await response.json();
+            if (data.error) {
+                throw new Error(data.error);
+            }
+
+            renderTrendingVideos(data.trending_videos);
+            lastUpdatedElement.textContent = `Last updated: ${new Date().toLocaleString()}`;
+            document.getElementById('errorBanner').classList.add('d-none');
+        } catch (error) {
+            console.error('Refresh failed:', error);
+            document.getElementById('errorBanner').classList.remove('d-none');
+            const errorText = document.querySelector('.alert p');
+            if (error.message.includes('invalidRegionCode')) {
+                errorText.textContent = 'Invalid region code selected. Please try a different region.';
+            } else {
+                errorText.textContent = 'Error fetching trending videos. Please try again later.';
+            }
+        } finally {
+            refreshBtn.disabled = false;
+            refreshBtn.innerHTML = '<i class="fas fa-sync-alt me-2"></i> Refresh Videos';
+        }
+    }
+
+    document.getElementById('refreshVideos').addEventListener('click', refreshVideos);
+    regionSelect.addEventListener('change', updateRegion);
+
+    // Card hover effect
+    trendingVideosContainer.addEventListener('mouseover', (e) => {
+        const card = e.target.closest('.hover-scale');
+        if (card) card.style.transform = 'scale(1.03)';
+    });
+    trendingVideosContainer.addEventListener('mouseout', (e) => {
+        const card = e.target.closest('.hover-scale');
+        if (card) card.style.transform = 'scale(1)';
+    });
+});
+</script>
+
+<style>
+.hover-scale {
+    transition: transform 0.2s ease-in-out;
+    cursor: pointer;
+}
+.card-img-top {
+    height: 180px;
+    object-fit: cover;
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+.glass-effect {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+.text-gradient {
+    background: linear-gradient(45deg, #6a11cb, #2575fc);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+.glow-effect {
+    box-shadow: 0 0 15px rgba(66, 135, 245, 0.4);
+    transition: all 0.3s ease;
+}
+.glow-effect:hover {
+    box-shadow: 0 0 20px rgba(66, 135, 245, 0.6);
+    transform: translateY(-2px);
+}
+.accent-line {
+    width: 50px;
+    height: 3px;
+    background: var(--primary-blue);
+    margin-top: 8px;
+    border-radius: 3px;
+}
+.feature-card {
+    display: flex;
+    flex-direction: column;
+}
+</style>
+{% endblock %}
