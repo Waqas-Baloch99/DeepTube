@@ -1,4 +1,3 @@
-# views.py
 from django.http import JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_http_methods
@@ -9,83 +8,208 @@ import json
 import os
 from datetime import datetime, timedelta
 from groq import Groq
-from pytrends.request import TrendReq
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+from dotenv import load_dotenv
+from django.views.decorators.http import require_GET
 
 logger = logging.getLogger(__name__)
 
 # Constants
 CACHE_TIMEOUT = 3600  # 1 hour in seconds
-HISTORY_TIMEOUT = 86400  # 1 day in seconds
-TREND_TIMEFRAME = 'today 3-m'
+HISTORY_TIMEOUT = 86400  # 24 hours in seconds
 MAX_TRENDS = 5
 
+# Load environment variables from .env file
+load_dotenv()
+YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY')
+GROQ_API_KEY = os.getenv('GROQ_API_KEY')
+
+# Initialize Groq client (assuming DeepSeek is simulated via Groq)
+groq_client = None
+try:
+    if GROQ_API_KEY:
+        groq_client = Groq(api_key=GROQ_API_KEY)
+except Exception as e:
+    logger.error(f"Failed to initialize Groq client: {e}")
+
 def get_groq_client():
-    """Initialize Groq client with API key validation."""
-    api_key = os.environ.get("GROQ_API_KEY")
-    if not api_key:
-        logger.error("GROQ_API_KEY not found in environment variables")
-        raise ValueError("GROQ_API_KEY is required")
-    return Groq(api_key=api_key)
-
-def get_google_trends():
-    """Fetch and process Google Trends data."""
-    try:
-        pytrends = TrendReq(hl='en-US', tz=360)
-        daily_trends = pytrends.today_searches(pn='US')
-        
-        if daily_trends.empty:
-            logger.warning("No trends returned from Google Trends")
-            return []
-
-        pytrends.build_payload(
-            kw_list=list(daily_trends[:MAX_TRENDS]),
-            cat=0,
-            timeframe=TREND_TIMEFRAME,
-            geo='US'
-        )
-        interest_data = pytrends.interest_over_time()
-        
-        trends = [
-            {
-                'name': trend,
-                'count': int(interest_data[trend].mean()),
-                'growth': f"+{int(interest_data[trend].pct_change().mean() * 100)}%"
-            }
-            for trend in daily_trends[:MAX_TRENDS * 2] 
-            if trend in interest_data.columns
-        ]
-        return trends[:MAX_TRENDS]
-    
-    except Exception as e:
-        logger.error(f"Failed to fetch Google Trends: {str(e)}")
-        return []
-
+    """Initialize and return Groq client."""
+    global groq_client
+    if groq_client is None:
+        if not GROQ_API_KEY:
+            raise ValueError("GROQ_API_KEY not found in environment variables")
+        groq_client = Groq(api_key=GROQ_API_KEY)
+    return groq_client
+# views.py - Updated with Enhanced Error Handling and Prompt Engineering
+@csrf_exempt
 def index(request):
-    """Render homepage with AI features and trending topics."""
-    context = {
-        'ai_model': 'DeepSeek-R1',
-        'features': [
-            "AI-Powered Script Generation",
-            "Trend-Driven Content Creation",
-            "Audience Engagement Analytics",
-            "Cross-Platform Optimization"
-        ],
-        'trends': [],
-        'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M'),
-    }
-    
-    trends = cache.get('google_trends')
-    if trends is None:
-        trends = get_google_trends()
-        cache.set('google_trends', trends, CACHE_TIMEOUT)
-    
-    context['trends'] = trends
-    context['sample_data'] = not bool(trends)
-    
-    if not request.session.session_key:
+    """Render chat interface and handle chat requests."""
+    session_key = request.session.session_key or ""
+    if not session_key:
         request.session.create()
+        session_key = request.session.session_key
     
+    chat_history = cache.get(f"chat_history_{session_key}", [])
+    
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            query = data.get('message', '').strip()
+            if not query:
+                return JsonResponse({'error': 'Message is required'}, status=400)
+
+            # Enhanced error handling for Groq client
+            try:
+                client = get_groq_client()
+            except Exception as e:
+                logger.error(f"Groq client initialization failed: {str(e)}")
+                return JsonResponse({'error': 'AI service configuration error'}, status=500)
+
+            # Optimized system prompt
+            system_prompt = """ You are DeepSeek-R1 Assistant a youtube strategy expert .
+                    For script generation, redirect to the dedicated tool"""
+
+            try:
+                response = client.chat.completions.create(
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": query}
+                    ],
+                    model="deepseek-r1-distill-llama-70b",
+                    temperature=0.4,
+                    timeout=10  # Add timeout
+                )
+            except Exception as e:
+                logger.error(f"Groq API Error: {str(e)}")
+                return JsonResponse({
+                    'error': 'AI service temporarily unavailable',
+                    'retry_after': 30
+                }, status=503)
+
+            # Process response
+            if not response.choices:
+                logger.error("Empty response from AI model")
+                return JsonResponse({'error': 'Empty AI response'}, status=500)
+
+            response_content = response.choices[0].message.content
+
+            # Save to chat history with size limit
+            chat_history.append({
+                "user": query,
+                "bot": response_content,
+                "timestamp": datetime.now().isoformat()
+            })
+            cache.set(f"chat_history_{session_key}", chat_history[-10:], HISTORY_TIMEOUT)  # Keep last 10 messages
+
+            return JsonResponse({
+                'response': response_content,
+                'model': 'deepseek-r1-distill-llama-70b-specdec',
+                'timestamp': datetime.now().isoformat()
+            })
+
+        except json.JSONDecodeError:
+            logger.error("Invalid JSON received")
+            return JsonResponse({'error': 'Invalid request format'}, status=400)
+        except Exception as e:
+            logger.error(f"Unexpected error: {str(e)}", exc_info=True)
+            return JsonResponse({'error': 'Service interruption'}, status=500)
+
+    # GET request remains unchanged
+    context = {
+        'model_name': 'DeepSeek-R1',
+        'chat_features': ['Smart Insights', 'Voice Chat', 'AI-Powered'],
+        'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'chat_history': chat_history,
+    }
     return render(request, 'youtubeapp/index.html', context)
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def clear_chat_history(request):
+    """Clear user's chat history."""
+    session_key = request.session.session_key or ""
+    cache.delete(f"chat_history_{session_key}")
+    return JsonResponse({'status': 'History cleared'})
+
+def youtube_analytics(request):
+    """Render YouTube analytics page with trending videos."""
+    region_code = request.session.get('region_code', 'US')
+    cache_key = f'youtube_trending_data_{region_code}'
+    cached_data = cache.get(cache_key)
+    
+    if not cached_data:
+        trending_videos = get_youtube_trending(YOUTUBE_API_KEY, region_code)
+        if trending_videos:
+            cache.set(cache_key, {'trending_videos': trending_videos}, CACHE_TIMEOUT)
+    else:
+        trending_videos = cached_data['trending_videos']
+
+    context = {
+        'countries': get_available_countries(),
+        'region_code': region_code,
+        'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+        'trending_videos': trending_videos if trending_videos else [],
+    }
+    return render(request, 'youtubeapp/youtube_analytics.html', context)
+
+def get_youtube_trending(api_key, region_code='US', max_results=MAX_TRENDS):
+    """Fetch trending YouTube videos with additional details."""
+    if not api_key:
+        logger.error("YouTube API key not found")
+        return None
+    
+    youtube = build('youtube', 'v3', developerKey=api_key)
+    
+    try:
+        trending_request = youtube.videos().list(
+            part='snippet,statistics',
+            chart='mostPopular',
+            regionCode=region_code,
+            maxResults=max_results
+        )
+        trending_response = trending_request.execute()
+        trending_videos = []
+
+        for item in trending_response['items']:
+            snippet = item['snippet']
+            stats = item['statistics']
+            video_id = item['id']
+            trending_videos.append({
+                'title': snippet['title'],
+                'channel': snippet['channelTitle'],
+                'video_id': video_id,
+                'thumbnail': snippet['thumbnails']['medium']['url'],
+                'url': f"https://www.youtube.com/watch?v={video_id}",
+                'description': snippet.get('description', 'No description available'),
+                'view_count': stats.get('viewCount', 'N/A')
+            })
+
+        return trending_videos
+
+    except HttpError as e:
+        logger.error(f"Failed to fetch YouTube trending videos: {e}")
+        return None
+
+@csrf_exempt
+@require_http_methods(["POST"])
+def update_region(request):
+    """Update trending videos based on selected region."""
+    try:
+        data = json.loads(request.body)
+        region_code = data.get('region_code', 'US')
+        trending_videos = get_youtube_trending(YOUTUBE_API_KEY, region_code=region_code)
+        
+        if not trending_videos:
+            return JsonResponse({'error': 'Failed to fetch videos for this region'}, status=500)
+        
+        cache_key = f'youtube_trending_data_{region_code}'
+        cache.set(cache_key, {'trending_videos': trending_videos}, CACHE_TIMEOUT)
+        
+        return JsonResponse({'trending_videos': trending_videos})
+    except Exception as e:
+        logger.error(f"Failed to update region: {e}")
+        return JsonResponse({'error': 'Invalid request'}, status=400)
 
 def script_generation(request):
     """Render script generation interface."""
@@ -163,7 +287,7 @@ def generate_script(request):
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": prompt}
             ],
-            model="deepseek-r1-distill-llama-70b",
+            model="deepseek-r1-distill-llama-70b",  # Placeholder; replace with actual DeepSeek model if available
             temperature=0.6,
             max_tokens=2500,
             top_p=0.9,
@@ -232,39 +356,20 @@ def clear_script_history(request):
     cache.delete(f"script_history_{session_key}")
     return JsonResponse({'status': 'History cleared'})
 
-@csrf_exempt
-@require_http_methods(["POST"])
-def chat_with_deepseek(request):
-    """Provide YouTube strategy advice via DeepSeek-R1."""
-    try:
-        data = json.loads(request.body)
-        query = data.get('message', '').strip()
-        if not query:
-            return JsonResponse({'error': 'Message is required'}, status=400)
+def contact_view(request):
+    """Render contact page and handle form submission."""
+    if request.method == 'POST':
+        # Handle form submission here
+        pass
+    return render(request, 'youtubeapp/contact.html')
 
-        client = get_groq_client()
-        response = client.chat.completions.create(
-            messages=[
-                {
-                    "role": "system",
-                    "content": """
-                    You are DeepSeek-R1 Assistant, a YouTube strategy expert.
-                    For script generation, redirect to the dedicated tool.
-                    """
-                },
-                {"role": "user", "content": query}
-            ],
-            model="deepseek-r1-distill-llama-70b",
-            temperature=0.4,
-            max_tokens=800
-        )
+def get_available_countries():
+    """Placeholder for country list - implement as needed."""
+    return ['US', 'UK', 'CA', 'AU']
 
-        return JsonResponse({
-            'response': response.choices[0].message.content,
-            'model': 'DeepSeek-R1',
-            'timestamp': datetime.now().isoformat()
-        })
-
-    except Exception as e:
-        logger.error(f"Chat error: {str(e)}")
-        return JsonResponse({'error': 'Chat service unavailable'}, status=503)
+def home(request):
+    """Render the DeepTube homepage."""
+    context = {
+        'last_updated': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+    }
+    return render(request, 'youtubeapp/home.html', context)
