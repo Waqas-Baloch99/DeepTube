@@ -1,208 +1,847 @@
 {% extends 'youtubeapp/base.html' %}
 {% load static %}
 
+{% block title %}Chat - DeepTube{% endblock %}
+
+{% block extra_css %}
+<style>
+    :root {
+        --sidebar-width: 260px;
+        --sidebar-bg: rgba(255, 255, 255, 0.9);
+        --chat-bg: #ffffff;
+        --border-color: rgba(203, 213, 224, 0.3);
+        --hover-bg: rgba(235, 248, 255, 0.8);
+    }
+
+    .chat-layout {
+        display: flex;
+        min-height: calc(100vh - 150px);
+        margin-top: -1rem;
+        margin-bottom: -1rem;
+    }
+
+    .sidebar {
+        width: var(--sidebar-width);
+        background: var(--sidebar-bg);
+        border-right: 1px solid var(--border-color);
+        padding: 1.5rem 0;
+        display: flex;
+        flex-direction: column;
+        transition: all 0.3s ease;
+    }
+
+    .sidebar-header {
+        padding: 0 1.5rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 1rem;
+    }
+
+    .sidebar-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: var(--primary-blue);
+        margin-bottom: 0.5rem;
+    }
+
+    .sidebar-subtitle {
+        font-size: 0.875rem;
+        color: var(--text-light);
+    }
+
+    .chat-history {
+        flex: 1;
+        overflow-y: auto;
+        padding: 0 1rem;
+    }
+
+    .history-item {
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        border-left: 3px solid transparent;
+    }
+
+    .history-item:hover {
+        background: var(--hover-bg);
+        border-left-color: var(--primary-blue);
+    }
+
+    .history-item.active {
+        background: var(--hover-bg);
+        border-left-color: var(--primary-blue);
+    }
+
+    .history-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: var(--primary-blue);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 0.75rem;
+        flex-shrink: 0;
+    }
+
+    .history-content {
+        flex: 1;
+        overflow: hidden;
+    }
+
+    .history-title {
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        margin-bottom: 0.25rem;
+    }
+
+    .history-preview {
+        font-size: 0.75rem;
+        color: var(--text-light);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .history-time {
+        font-size: 0.7rem;
+        color: var(--text-light);
+    }
+
+    .sidebar-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid var(--border-color);
+        margin-top: auto;
+    }
+
+    .chat-container {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: var(--chat-bg);
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+
+    .chat-header {
+        padding: 1.25rem 1.5rem;
+        border-bottom: 1px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .chat-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .chat-actions {
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .chat-body {
+        flex: 1;
+        padding: 1.5rem;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .welcome-container {
+        text-align: center;
+        max-width: 600px;
+        margin: 2rem auto;
+    }
+
+    .welcome-title {
+        font-size: 1.75rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .welcome-subtitle {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin-bottom: 2rem;
+    }
+
+    .chat-messages {
+        flex: 1;
+        overflow-y: auto;
+        padding-right: 0.5rem;
+    }
+
+    .message {
+        max-width: 80%;
+        margin-bottom: 1.5rem;
+        animation: messageFadeIn 0.3s ease forwards;
+    }
+
+    .user-message {
+        margin-left: auto;
+    }
+
+    .bot-message {
+        margin-right: auto;
+    }
+
+    .message-content {
+        padding: 1rem;
+        border-radius: 1rem;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    }
+
+    .user-message .message-content {
+        background: linear-gradient(135deg, var(--primary-blue), #2d6ed9);
+        color: white;
+        border-top-right-radius: 0;
+    }
+
+    .bot-message .message-content {
+        background: #f8f9fa;
+        border-top-left-radius: 0;
+    }
+
+    .message-timestamp {
+        font-size: 0.7rem;
+        color: var(--text-light);
+        margin-top: 0.25rem;
+        text-align: right;
+    }
+
+    .chat-footer {
+        padding: 1.25rem 1.5rem;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .message-input-container {
+        position: relative;
+    }
+
+    .message-input {
+        width: 100%;
+        padding: 1rem;
+        padding-right: 7rem;
+        border: 1px solid var(--border-color);
+        border-radius: 0.75rem;
+        resize: none;
+        min-height: 60px;
+        max-height: 200px;
+        transition: all 0.2s ease;
+    }
+
+    .message-input:focus {
+        outline: none;
+        border-color: var(--primary-blue);
+        box-shadow: 0 0 0 2px rgba(43, 108, 176, 0.1);
+    }
+
+    .input-actions {
+        position: absolute;
+        right: 0.75rem;
+        bottom: 0.75rem;
+        display: flex;
+        gap: 0.5rem;
+    }
+
+    .action-button {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: transparent;
+        border: none;
+        color: #6c757d;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .action-button:hover {
+        background: var(--hover-bg);
+        color: var(--primary-blue);
+    }
+
+    .send-button {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--primary-blue);
+        border: none;
+        color: white;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .send-button:hover {
+        background: var(--hover-blue);
+        transform: translateY(-2px);
+    }
+
+    .send-button:disabled {
+        background: #cbd5e0;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .prompt-suggestions {
+        margin-top: 3rem;
+    }
+
+    .prompt-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+
+    .prompt-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .prompt-card {
+        padding: 1.5rem;
+        border-radius: 0.75rem;
+        border: 1px solid var(--border-color);
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .prompt-card:hover {
+        border-color: var(--primary-blue);
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(43, 108, 176, 0.1);
+    }
+
+    .prompt-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--hover-bg);
+        color: var(--primary-blue);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+
+    .prompt-card-title {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .prompt-description {
+        font-size: 0.875rem;
+        color: var(--text-light);
+    }
+
+    .thinking-indicator {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .thinking-indicator span {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background-color: #999;
+        border-radius: 50%;
+        animation: thinking 1.4s infinite ease-in-out both;
+    }
+
+    .thinking-indicator span:nth-child(1) { animation-delay: 0s; }
+    .thinking-indicator span:nth-child(2) { animation-delay: 0.2s; }
+    .thinking-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes thinking {
+        0%, 80%, 100% { transform: scale(0); }
+        40% { transform: scale(1); }
+    }
+
+    @keyframes messageFadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 992px) {
+        .chat-layout {
+            flex-direction: column;
+        }
+        .sidebar {
+            width: 100%;
+            border-right: none;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+        }
+        .chat-history {
+            max-height: 200px;
+        }
+    }
+
+    #voiceButton.listening {
+        background-color: #dc3545;
+        color: white;
+        animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container py-5">
-    <!-- Error Banner -->
-    <div class="row mb-4 {% if error %}show{% endif %}" id="errorBanner">
-        <div class="col-12">
-            <div class="alert alert-warning alert-dismissible fade show shadow-sm" role="alert">
-                <h4 class="alert-heading">Connection Issue</h4>
-                <p>{{ error|default:"Sorry, we couldn't fetch trends. Please try again later or contact support." }}</p>
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
+<div class="chat-layout">
+    <!-- Sidebar with Chat History -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-title">DeepSeek Chat</div>
+            <div class="sidebar-subtitle">Your YouTube Strategy Expert</div>
+        </div>
+        
+        <div class="chat-history" id="chatHistory">
+            {% if chat_history %}
+                {% for entry in chat_history %}
+                    {% if entry.user %}
+                        <div class="history-item {% if forloop.first %}active{% endif %}" data-id="{{ forloop.counter }}">
+                            <div class="history-icon">
+                                <i class="fas fa-comment-alt"></i>
+                            </div>
+                            <div class="history-content">
+                                <div class="history-title">Chat {{ forloop.counter }}</div>
+                                <div class="history-preview">{{ entry.user|truncatechars:30 }}</div>
+                                <div class="history-time">{{ entry.timestamp|date:"M d, h:i a" }}</div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if not forloop.first %}{% endif %}
+                    {% endfor %}
+            {% else %}
+                <div class="history-item active" data-id="new">
+                    <div class="history-icon">
+                        <i class="fas fa-comment-alt"></i>
+                    </div>
+                    <div class="history-content">
+                        <div class="history-title">New Chat</div>
+                        <div class="history-preview">Start a new conversation</div>
+                        <div class="history-time">Now</div>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="sidebar-footer">
+            <button class="btn btn-outline-danger btn-sm w-100" id="clearHistoryBtn">
+                <i class="fas fa-trash me-2"></i> Clear All History
+            </button>
         </div>
     </div>
-
-    <!-- Logo & Tagline Section -->
-    <div class="row mb-5 text-center">
-        <div class="col-12">
-            <div class="logo-container glass-effect p-4 rounded-4 shadow-sm">
-                <h1 class="display-4 fw-bold">DeepTube <span class="text-gradient">AI Assistant</span></h1>
-                <p class="lead text-muted mt-2">Discover and create engaging content with AI-powered insights</p>
+    
+    <!-- Main Chat Area -->
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="chat-title">
+                <i class="fas fa-robot me-2 text-primary"></i> Chat with DeepSeek-R1
+            </div>
+            <div class="chat-actions">
+                <button class="btn btn-sm btn-outline-primary" id="newChatBtn">
+                    <i class="fas fa-plus me-1"></i> New Chat
+                </button>
             </div>
         </div>
-    </div>
-
-    <!-- Trending Tags Section -->
-    <div class="row mb-5">
-        <div class="col-12 tags-container glass-effect p-4 rounded-4 shadow-sm">
-            <div class="section-header mb-3">
-                <h4 class="fw-bold"><i class="fas fa-fire me-2"></i>Trending Tags</h4>
-                <div class="accent-line"></div>
+        
+        <div class="chat-body">
+            <div id="welcomeContainer" class="welcome-container {% if chat_history %}d-none{% endif %}">
+                <div class="welcome-title">Welcome to DeepSeek-R1</div>
+                <div class="welcome-subtitle">Your YouTube Strategy Expert</div>
             </div>
-            <p class="text-muted mb-3">Explore the latest trending topics to inspire your content!</p>
-            <ul id="trendingTags" class="list-group list-group-flush">
-                {% if sample_data %}
-                    <li class="list-group-item text-muted">Loading sample trends...</li>
+            
+            <div class="chat-messages" id="chatMessages">
+                {% if chat_history %}
+                    {% for entry in chat_history %}
+                        {% if entry.user %}
+                            <div class="message user-message">
+                                <div class="message-content">{{ entry.user }}</div>
+                                <div class="message-timestamp">{{ entry.timestamp|date:"H:i" }}</div>
+                            </div>
+                        {% endif %}
+                        {% if entry.bot %}
+                            <div class="message bot-message">
+                                <div class="message-content">
+                                    <div class="d-flex align-items-center mb-2">
+                                        <div class="rounded-circle bg-primary p-1 me-2" style="width: 24px; height: 24px;">
+                                            <img src="{% static 'youtubeapp/images/deepseek-logo.png' %}" alt="DeepSeek" width="16" height="16" class="rounded-circle">
+                                        </div>
+                                        <strong class="small">DeepSeek-R1</strong>
+                                    </div>
+                                    {{ entry.bot }}
+                                </div>
+                                <div class="message-timestamp">{{ entry.timestamp|date:"H:i" }}</div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% else %}
+                    <div class="message bot-message">
+                        <div class="message-content">
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="rounded-circle bg-primary p-1 me-2" style="width: 24px; height: 24px;">
+                                    <img src="{% static 'youtubeapp/images/deepseek-logo.png' %}" alt="DeepSeek" width="16" height="16" class="rounded-circle">
+                                </div>
+                                <strong class="small">DeepSeek-R1</strong>
+                            </div>
+                            Hello! I'm DeepSeek-R1, your YouTube strategy expert. How can I assist you today?
+                        </div>
+                        <div class="message-timestamp">{{ last_updated|date:"H:i" }}</div>
+                    </div>
                 {% endif %}
-            </ul>
-            <div class="d-flex justify-content-between align-items-center mt-4">
-                <button class="btn btn-deepseek glow-effect" id="refreshTags">
-                    <i class="fas fa-sync-alt me-2"></i> Refresh Trends
-                </button>
-                <span class="text-muted small" id="lastUpdated">Last updated: {{ last_updated }}</span>
+            </div>
+            
+            <div class="prompt-suggestions" id="promptSuggestions" {% if chat_history %}style="display: none;"{% endif %}>
+                <div class="prompt-title">Explore with these prompts</div>
+                <div class="prompt-grid">
+                    <div class="prompt-card" data-prompt="Suggest a YouTube video title for a cooking channel">
+                        <div class="prompt-icon"><i class="fas fa-pen-fancy"></i></div>
+                        <div class="prompt-card-title">Content Ideas</div>
+                        <div class="prompt-description">Get creative ideas for YouTube videos</div>
+                    </div>
+                    <div class="prompt-card" data-prompt="Analyze my latest YouTube video performance">
+                        <div class="prompt-icon"><i class="fas fa-chart-line"></i></div>
+                        <div class="prompt-card-title">Analytics</div>
+                        <div class="prompt-description">Understand your channel's performance</div>
+                    </div>
+                    <div class="prompt-card" data-prompt="Write a script for a 5-minute tech review">
+                        <div class="prompt-icon"><i class="fas fa-code"></i></div>
+                        <div class="prompt-card-title">Script Writing</div>
+                        <div class="prompt-description">Generate scripts for your videos</div>
+                    </div>
+                    <div class="prompt-card" data-prompt="Explain YouTube SEO in simple terms">
+                        <div class="prompt-icon"><i class="fas fa-graduation-cap"></i></div>
+                        <div class="prompt-card-title">Learning</div>
+                        <div class="prompt-description">Master YouTube strategies easily</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-footer">
+            <div class="message-input-container">
+                <textarea id="userInput" class="message-input" placeholder="Message DeepSeek-R1..." rows="1"></textarea>
+                <div class="input-actions">
+                    <button class="action-button" id="attachButton" title="Attach file">
+                        <i class="fas fa-paperclip"></i>
+                    </button>
+                    <button class="action-button" id="voiceButton" title="Voice input">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                    <button class="send-button" id="sendButton" disabled>
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
             </div>
         </div>
     </div>
-
-    <!-- Features Section -->
-    <div class="row g-4">
-        <div class="col-md-6">
-            <div class="feature-card glass-effect p-4 rounded-4 shadow-sm">
-                <div class="section-header mb-3">
-                    <h4 class="fw-bold"><i class="fas fa-magic me-2"></i>Generate Content</h4>
-                    <div class="accent-line"></div>
-                </div>
-                <p class="text-muted">AI-powered tools to create engaging videos, scripts, and social media content effortlessly.</p>
-                <a href="{% url 'youtubeapp:script_generation' %}" class="btn btn-deepseek glow-effect">
-                    <i class="fas fa-magic me-2"></i> Get Started
-                </a>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="feature-card glass-effect p-4 rounded-4 shadow-sm">
-                <div class="section-header mb-3">
-                    <h4 class="fw-bold"><i class="fas fa-chart-line me-2"></i>Analytics Dashboard</h4>
-                    <div class="accent-line"></div>
-                </div>
-                <p class="text-muted">Track performance metrics and gain actionable insights from your content.</p>
-                <button class="btn btn-deepseek glow-effect" disabled>
-                    <i class="fas fa-chart-line me-2"></i> Coming Soon
-                </button>
-            </div>
-        </div>
-    </div>
-
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<!-- FontAwesome Icons (Fixed CDN URL) -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" 
-      integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" 
-      crossorigin="anonymous" 
-      referrerpolicy="no-referrer" />
-
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
-    const trendingTagsContainer = document.getElementById('trendingTags');
-    const lastUpdatedElement = document.getElementById('lastUpdated');
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    const chatMessages = document.getElementById('chatMessages');
+    const userInput = document.getElementById('userInput');
+    const sendButton = document.getElementById('sendButton');
+    const voiceButton = document.getElementById('voiceButton');
+    const clearHistoryBtn = document.getElementById('clearHistoryBtn');
+    const newChatBtn = document.getElementById('newChatBtn');
+    const welcomeContainer = document.getElementById('welcomeContainer');
+    const promptSuggestions = document.getElementById('promptSuggestions');
+    const promptCards = document.querySelectorAll('.prompt-card');
+    
+    let recognition;
+    let isListening = false;
+    const synth = window.speechSynthesis;
 
-    // Initial trends from backend context
-    let initialTrends = JSON.parse(document.getElementById('trends-data')?.textContent || '[]');
-    renderTrends(initialTrends);
+    // Auto-resize textarea
+    userInput.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+        sendButton.disabled = !this.value.trim();
+    });
 
-    // Render trends dynamically
-    function renderTrends(trends) {
-        if (!trends || trends.length === 0) {
-            trendingTagsContainer.innerHTML = '<li class="list-group-item text-muted">No trends available</li>';
+    // Initialize speech recognition if available
+    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
+        recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+    }
+
+    // Handle prompt card clicks
+    promptCards.forEach(card => {
+        card.addEventListener('click', () => {
+            userInput.value = card.dataset.prompt;
+            userInput.dispatchEvent(new Event('input'));
+            userInput.focus();
+            userInput.scrollIntoView({ behavior: 'smooth' });
+            promptSuggestions.style.display = 'none';
+        });
+    });
+
+    // Send message
+    function sendMessage() {
+        const message = userInput.value.trim();
+        if (!message) return;
+
+        welcomeContainer.classList.add('d-none');
+        promptSuggestions.style.display = 'none';
+
+        displayMessage(message, 'user');
+        userInput.value = '';
+        userInput.style.height = 'auto';
+        sendButton.disabled = true;
+        displayThinkingMessage();
+
+        fetch('{% url "youtubeapp:index" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify({ message: message })
+        })
+        .then(response => {
+            if (!response.ok) {
+                if (response.status === 503) {
+                    throw new Error('Service Unavailable. The server is temporarily unable to handle the request. Please try again later.');
+                }
+                throw new Error(`Server error: ${response.status} - ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            removeThinkingMessage();
+            displayMessage(data.response, 'bot');
+            if (isListening && synth) speakResponse(data.response);
+            updateChatHistory();
+        })
+        .catch(error => {
+            removeThinkingMessage();
+            if (error.message.includes('Service Unavailable')) {
+                displayMessage('The server is temporarily unavailable. Please try again in a few minutes.', 'bot');
+            } else {
+                displayMessage(`Error: ${error.message}`, 'bot');
+            }
+            console.error('Chat error:', error);
+        })
+        .finally(() => {
+            sendButton.disabled = false;
+            scrollToBottom();
+        });
+    }
+
+    // Display message
+    function displayMessage(content, sender) {
+        const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${sender}-message`;
+        
+        let html = '';
+        if (sender === 'bot') {
+            html = `
+                <div class="message-content">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="rounded-circle bg-primary p-1 me-2" style="width: 24px; height: 24px;">
+                            <img src="{% static 'youtubeapp/images/deepseek-logo.png' %}" alt="DeepSeek" width="16" height="16" class="rounded-circle">
+                        </div>
+                        <strong class="small">DeepSeek-R1</strong>
+                    </div>
+                    ${content}
+                </div>
+            `;
+        } else {
+            html = `<div class="message-content">${content}</div>`;
+        }
+        html += `<div class="message-timestamp">${time}</div>`;
+        
+        messageDiv.innerHTML = html;
+        chatMessages.appendChild(messageDiv);
+        scrollToBottom();
+    }
+
+    // Display thinking indicator
+    function displayThinkingMessage() {
+        const thinkingDiv = document.createElement('div');
+        thinkingDiv.id = 'thinkingMessage';
+        thinkingDiv.className = 'message bot-message';
+        thinkingDiv.innerHTML = `
+            <div class="message-content">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="rounded-circle bg-primary p-1 me-2" style="width: 24px; height: 24px;">
+                        <img src="{% static 'youtubeapp/images/deepseek-logo.png' %}" alt="DeepSeek" width="16" height="16" class="rounded-circle">
+                    </div>
+                    <strong class="small">DeepSeek-R1</strong>
+                </div>
+                <div class="thinking-indicator">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+            <div class="message-timestamp">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+        `;
+        chatMessages.appendChild(thinkingDiv);
+        scrollToBottom();
+    }
+
+    function removeThinkingMessage() {
+        const thinking = document.getElementById('thinkingMessage');
+        if (thinking) thinking.remove();
+    }
+
+    function scrollToBottom() {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // Voice input
+    voiceButton.addEventListener('click', () => {
+        if (!recognition) {
+            displayMessage("Speech recognition is not supported in your browser.", 'bot');
             return;
         }
+        if (isListening) {
+            stopVoiceInput();
+        } else {
+            startVoiceInput();
+        }
+    });
 
-        const tagsHtml = trends.map(tag => `
-            <li class="list-group-item d-flex justify-content-between align-items-center tag-item rounded-3 mb-2">
-                <span class="tag-name fw-medium">${escapeHtml(tag.name)}</span>
-                <div>
-                    <span class="badge bg-deepseek-accent me-2">${tag.count} interest</span>
-                    <span class="badge bg-success">${tag.growth}</span>
+    if (recognition) {
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript.trim();
+            userInput.value = transcript;
+            userInput.dispatchEvent(new Event('input'));
+            sendMessage();
+            stopVoiceInput();
+        };
+
+        recognition.onerror = (event) => {
+            displayMessage(`Voice input error: ${event.error}`, 'bot');
+            stopVoiceInput();
+        };
+
+        recognition.onend = () => {
+            if (isListening) stopVoiceInput();
+        };
+    }
+
+    function startVoiceInput() {
+        isListening = true;
+        voiceButton.classList.add('listening');
+        voiceButton.innerHTML = '<i class="fas fa-microphone-slash"></i>';
+        recognition.start();
+    }
+
+    function stopVoiceInput() {
+        isListening = false;
+        voiceButton.classList.remove('listening');
+        voiceButton.innerHTML = '<i class="fas fa-microphone"></i>';
+        if (recognition) recognition.stop();
+    }
+
+    function speakResponse(text) {
+        if (!synth) return;
+        synth.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'en-US';
+        synth.speak(utterance);
+    }
+
+    // Update chat history
+    function updateChatHistory() {
+        const historyContainer = document.getElementById('chatHistory');
+        const messages = chatMessages.querySelectorAll('.message');
+        if (messages.length > 0) {
+            const firstUserMessage = Array.from(messages).find(msg => msg.classList.contains('user-message'));
+            const preview = firstUserMessage ? firstUserMessage.querySelector('.message-content').textContent.slice(0, 30) : 'New conversation';
+            const time = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            historyContainer.innerHTML = `
+                <div class="history-item active" data-id="1">
+                    <div class="history-icon">
+                        <i class="fas fa-comment-alt"></i>
+                    </div>
+                    <div class="history-content">
+                        <div class="history-title">Current Chat</div>
+                        <div class="history-preview">${preview}</div>
+                        <div class="history-time">${time}</div>
+                    </div>
                 </div>
-            </li>
-        `).join('');
-        trendingTagsContainer.innerHTML = tagsHtml;
-    }
-
-    // Escape HTML to prevent XSS
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    // Fetch fresh trends on refresh
-    async function refreshTrends() {
-        try {
-            const response = await fetch('{% url "youtubeapp:index" %}', {
-                method: 'GET',
-                headers: { 'X-CSRFToken': csrfToken }
-            });
-            if (!response.ok) {
-                throw new Error(`HTTP error ${response.status}`);
-            }
-            const data = await response.text();
-            const parser = new DOMParser();
-            const doc = parser.parseFromString(data, 'text/html');
-            const trendsScript = doc.querySelector('#trends-data');
-            const newTrends = trendsScript ? JSON.parse(trendsScript.textContent) : [];
-            const newLastUpdated = doc.querySelector('#lastUpdated')?.textContent || 'Last updated: just now';
-
-            renderTrends(newTrends);
-            lastUpdatedElement.textContent = newLastUpdated;
-
-            if (!newTrends.length) {
-                showErrorBanner('No trends available at this time');
-            }
-        } catch (error) {
-            console.error('Trend refresh error:', error);
-            showErrorBanner('Failed to refresh trends. Please try again.');
+            `;
         }
     }
 
-    // Error banner handling
-    function showErrorBanner(message) {
-        const errorBanner = document.getElementById('errorBanner');
-        errorBanner.querySelector('p').textContent = message;
-        errorBanner.style.display = 'block';
+    // Start new chat
+    function startNewChat() {
+        chatMessages.innerHTML = '';
+        welcomeContainer.classList.remove('d-none');
+        promptSuggestions.style.display = 'block';
+        displayMessage("Hello! I'm DeepSeek-R1, your YouTube strategy expert. How can I assist you today?", 'bot');
+        document.querySelectorAll('.history-item').forEach(item => item.classList.remove('active'));
+        updateChatHistory();
     }
 
-    // Refresh button with animation
-    const refreshButton = document.getElementById('refreshTags');
-    refreshButton.addEventListener('click', async () => {
-        refreshButton.classList.add('rotating');
-        refreshButton.disabled = true;
-        await refreshTrends();
-        setTimeout(() => {
-            refreshButton.classList.remove('rotating');
-            refreshButton.disabled = false;
-        }, 1000);
-    });
+    // Clear history
+    function clearHistory() {
+        if (!confirm('Are you sure you want to clear all chat history? This cannot be undone.')) return;
+        
+        fetch('{% url "youtubeapp:clear_chat_history" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) throw new Error('Failed to clear history');
+            return response.json();
+        })
+        .then(data => {
+            startNewChat();
+        })
+        .catch(error => {
+            displayMessage(`Error clearing history: ${error.message}`, 'bot');
+        });
+    }
 
-    // Interactive effects
-    trendingTagsContainer.addEventListener('mouseover', (e) => {
-        const tagItem = e.target.closest('.tag-item');
-        if (tagItem) tagItem.classList.add('highlight', 'shadow-sm');
-    });
-    trendingTagsContainer.addEventListener('mouseout', (e) => {
-        const tagItem = e.target.closest('.tag-item');
-        if (tagItem) tagItem.classList.remove('highlight', 'shadow-sm');
-    });
-    trendingTagsContainer.addEventListener('click', (e) => {
-        const tagName = e.target.closest('.tag-name');
-        if (tagName) {
-            alert(`Explore content for ${tagName.textContent}`);
+    // Event listeners
+    sendButton.addEventListener('click', sendMessage);
+    userInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
         }
     });
+    clearHistoryBtn.addEventListener('click', clearHistory);
+    newChatBtn.addEventListener('click', startNewChat);
 
-    // Feature card hover effect
-    document.querySelectorAll('.feature-card').forEach(card => {
-        card.addEventListener('mouseenter', () => {
-            card.classList.add('shadow-lg');
-            card.style.transform = 'translateY(-5px)';
-        });
-        card.addEventListener('mouseleave', () => {
-            card.classList.remove('shadow-lg');
-            card.style.transform = 'translateY(0)';
-        });
-    });
-
-    // Dismiss error banner
-    document.querySelector('#errorBanner .btn-close')?.addEventListener('click', () => {
-        document.getElementById('errorBanner').style.display = 'none';
-    });
+    // Scroll to bottom on load
+    scrollToBottom();
 });
 </script>
-
-<!-- Custom Styles -->
-
 {% endblock %}
