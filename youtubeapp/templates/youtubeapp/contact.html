@@ -1,0 +1,315 @@
+{% extends 'youtubeapp/base.html' %}
+{% load static %}
+
+{% block title %}Contact - DeepTube{% endblock %}
+
+{% block extra_css %}
+<style>
+    .contact-card {
+        transition: all 0.3s ease;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .contact-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: linear-gradient(90deg, var(--primary-blue), #2d6ed9);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.5s ease;
+    }
+    
+    .contact-card:hover::before {
+        transform: scaleX(1);
+    }
+    
+    .contact-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(66, 135, 245, 0.15) !important;
+    }
+    
+    .contact-info-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        background: rgba(240, 246, 255, 0.5);
+        transition: all 0.3s ease;
+    }
+    
+    .contact-info-item:hover {
+        background: rgba(66, 135, 245, 0.1);
+        transform: translateX(5px);
+    }
+    
+    .contact-icon {
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, var(--primary-blue), #2d6ed9);
+        color: white;
+        border-radius: 50%;
+        margin-right: 1rem;
+        font-size: 1.25rem;
+        box-shadow: 0 4px 10px rgba(66, 135, 245, 0.3);
+    }
+    
+    .contact-text {
+        flex: 1;
+    }
+    
+    .contact-text h5 {
+        margin-bottom: 0.25rem;
+        color: #2c3e50;
+    }
+    
+    .contact-text p {
+        margin-bottom: 0;
+        color: #6c757d;
+    }
+    
+    .contact-text a {
+        color: var(--primary-blue);
+        text-decoration: none;
+        transition: color 0.2s ease;
+    }
+    
+    .contact-text a:hover {
+        color: var(--hover-blue);
+        text-decoration: underline;
+    }
+    
+    .developer-info {
+        padding: 2rem;
+        border-radius: 0.5rem;
+        background: linear-gradient(135deg, rgba(240, 246, 255, 0.8), rgba(255, 255, 255, 0.8));
+        margin-top: 2rem;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(66, 135, 245, 0.1);
+        text-align: center;
+    }
+    
+    .developer-info::before {
+        content: '';
+        position: absolute;
+        top: -50px;
+        right: -50px;
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: rgba(66, 135, 245, 0.1);
+        z-index: -1;
+    }
+    
+    .developer-info::after {
+        content: '';
+        position: absolute;
+        bottom: -30px;
+        left: -30px;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: rgba(66, 135, 245, 0.1);
+        z-index: -1;
+    }
+    
+    .developer-info h4 {
+        color: #2c3e50;
+        margin-bottom: 1rem;
+        position: relative;
+        display: inline-block;
+    }
+    
+    .developer-info h4::after {
+        content: '';
+        position: absolute;
+        bottom: -5px;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: var(--primary-blue);
+        border-radius: 3px;
+    }
+    
+    .social-links {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1.5rem;
+        justify-content: center;
+    }
+    
+    .social-link {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: white;
+        color: var(--primary-blue);
+        border-radius: 50%;
+        font-size: 1.25rem;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+    }
+    
+    .social-link:hover {
+        transform: translateY(-5px);
+        background: var(--primary-blue);
+        color: white;
+    }
+    
+    .animate-fade-in {
+        animation: fadeIn 1s ease forwards;
+        opacity: 0;
+    }
+    
+    .animate-slide-up {
+        animation: slideUp 0.8s ease forwards;
+        opacity: 0;
+    }
+    
+    .animate-slide-in-right {
+        animation: slideInRight 0.8s ease forwards;
+        opacity: 0;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+    
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(30px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @keyframes slideInRight {
+        from { opacity: 0; transform: translateX(30px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    
+    .delay-1 { animation-delay: 0.2s; }
+    .delay-2 { animation-delay: 0.4s; }
+    .delay-3 { animation-delay: 0.6s; }
+    .delay-4 { animation-delay: 0.8s; }
+    
+    .profile-image {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 5px solid white;
+        box-shadow: 0 5px 15px rgba(66, 135, 245, 0.2);
+        margin-bottom: 1.5rem;
+    }
+    
+    .developer-title {
+        color: var(--primary-blue);
+        font-weight: 600;
+        margin-bottom: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h1 class="text-center mb-5 animate-fade-in">Contact</h1>
+    
+    <div class="row justify-content-center">
+        <!-- Developer Information -->
+        <div class="col-lg-8 mb-5 animate-slide-up">
+            <div class="developer-info">
+                <h4>Waqas Baloch</h4>
+                <div class="developer-title">AI/ML Engineer, Backend Expert,Python Developer</div>
+                <p class="mb-4">
+                    I'm the developer behind DeepTube. I'd love to hear your feedback and I'm open to collaboration on your projects. If you need guidance or support with your project, or have any questions about DeepTube, feel free to reach out via email or any of my social profiles                </p>
+                <div class="social-links">
+                    <a href="mailto:waqaskhosa99@gmail.com" class="social-link" title="Email">
+                        <i class="fas fa-envelope"></i>
+                    </a>
+                    <a href="https://www.linkedin.com/in/waqas-baloch/" target="_blank" class="social-link" title="LinkedIn">
+                        <i class="fab fa-linkedin-in"></i>
+                    </a>
+                    <a href="https://github.com/Waqas-Baloch99/DeepTube" target="_blank" class="social-link" title="GitHub">
+                        <i class="fab fa-github"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Contact Information -->
+        <div class="col-lg-8">
+            <div class="contact-info">
+                <div class="contact-info-item animate-slide-in-right delay-1">
+                    <div class="contact-icon">
+                        <i class="fas fa-envelope"></i>
+                    </div>
+                    <div class="contact-text">
+                        <h5>Email</h5>
+                        <p><a href="mailto:waqaskhosa99@gmail.com">waqaskhosa99@gmail.com</a></p>
+                    </div>
+                </div>
+                
+                <div class="contact-info-item animate-slide-in-right delay-2">
+                    <div class="contact-icon">
+                        <i class="fab fa-linkedin-in"></i>
+                    </div>
+                    <div class="contact-text">
+                        <h5>LinkedIn</h5>
+                        <p><a href="https://www.linkedin.com/in/waqas-baloch/" target="_blank">linkedin.com/in/waqas-baloch</a></p>
+                    </div>
+                </div>
+                
+                <div class="contact-info-item animate-slide-in-right delay-3">
+                    <div class="contact-icon">
+                        <i class="fab fa-github"></i>
+                    </div>
+                    <div class="contact-text">
+                        <h5>GitHub</h5>
+                        <p><a href="https://github.com/Waqas-Baloch99/DeepTube" target="_blank">github.com/Waqas-Baloch99/DeepTube</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Trigger animations when page loads
+        const animatedElements = document.querySelectorAll('.animate-fade-in, .animate-slide-up, .animate-slide-in-right');
+        
+        // Create an observer
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    // Add the animation class
+                    entry.target.style.animationPlayState = 'running';
+                    // Stop observing the element
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, {
+            threshold: 0.1
+        });
+        
+        // Observe each element
+        animatedElements.forEach(el => {
+            el.style.animationPlayState = 'paused';
+            observer.observe(el);
+        });
+    });
+</script>
+{% endblock %}
+
