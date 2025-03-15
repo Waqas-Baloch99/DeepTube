@@ -109,3 +109,4 @@ STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
