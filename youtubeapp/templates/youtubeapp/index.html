@@ -11,15 +11,17 @@
         --chat-bg: #ffffff;
         --border-color: rgba(203, 213, 224, 0.3);
         --hover-bg: rgba(235, 248, 255, 0.8);
+        --primary-blue: #2b6cb0;
+        --text-light: #6c757d;
     }
 
     /* Main layout structure */
     .chat-layout {
         display: flex;
-        min-height: calc(100vh - 150px);
+        min-height: calc(100vh - 76px); /* Adjust based on header height */
         margin: 0;
-        padding: 1rem 0;
-        position: relative;
+        padding: 0;
+        box-sizing: border-box;
     }
 
     /* Sidebar styles */
@@ -31,9 +33,8 @@
         display: flex;
         flex-direction: column;
         transition: all 0.3s ease;
-        height: calc(100vh - 150px);
-        position: sticky;
-        top: 76px;
+        height: calc(100vh - 76px); /* Ensure sidebar takes full height minus header */
+        overflow-y: auto;
     }
 
     .sidebar-header {
@@ -149,8 +150,7 @@
         background: var(--chat-bg);
         border-radius: 0.5rem;
         overflow: hidden;
-        height: calc(100vh - 150px);
-        position: relative;
+        height: calc(100vh - 76px); /* Ensure chat container takes full height minus header */
     }
 
     .chat-header {
@@ -160,8 +160,6 @@
         align-items: center;
         justify-content: space-between;
         background: var(--chat-bg);
-        position: sticky;
-        top: 0;
         z-index: 10;
     }
 
@@ -185,7 +183,6 @@
         flex-direction: column;
         scrollbar-width: thin;
         scrollbar-color: var(--primary-blue) transparent;
-        height: calc(100% - 140px); /* Adjust based on header and footer height */
     }
 
     .chat-body::-webkit-scrollbar {
@@ -273,8 +270,6 @@
         padding: 1.25rem 1.5rem;
         border-top: 1px solid var(--border-color);
         background: var(--chat-bg);
-        position: sticky;
-        bottom: 0;
         z-index: 10;
     }
 
@@ -284,8 +279,7 @@
 
     .message-input {
         width: 100%;
-        padding: 1rem;
-        padding-right: 7rem;
+        padding: 1rem 4rem 1rem 1rem; /* Adjusted padding to accommodate only send button */
         border: 1px solid var(--border-color);
         border-radius: 0.75rem;
         resize: none;
@@ -293,6 +287,7 @@
         max-height: 200px;
         transition: all 0.2s ease;
         overflow-y: auto;
+        box-sizing: border-box;
     }
 
     .message-input:focus {
@@ -310,25 +305,6 @@
         align-items: center;
     }
 
-    .action-button {
-        width: 36px;
-        height: 36px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: transparent;
-        border: none;
-        color: #6c757d;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .action-button:hover {
-        background: var(--hover-bg);
-        color: var(--primary-blue);
-    }
-
     .send-button {
         width: 36px;
         height: 36px;
@@ -344,7 +320,7 @@
     }
 
     .send-button:hover {
-        background: var(--hover-blue);
+        background: var(--primary-blue);
         transform: translateY(-2px);
     }
 
@@ -439,24 +415,12 @@
         to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Voice button styles */
-    #voiceButton.listening {
-        background-color: #dc3545;
-        color: white;
-        animation: pulse 1.5s infinite;
-    }
-
-    @keyframes pulse {
-        0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
-        70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
-    }
-
     /* Responsive adjustments */
     @media (max-width: 992px) {
         .chat-layout {
             flex-direction: column;
             height: auto;
+            min-height: calc(100vh - 76px);
         }
         
         .sidebar {
@@ -464,8 +428,6 @@
             height: auto;
             border-right: none;
             border-bottom: 1px solid var(--border-color);
-            position: relative;
-            top: 0;
         }
         
         .chat-history {
@@ -474,12 +436,11 @@
         
         .chat-container {
             height: auto;
-            min-height: 70vh;
+            min-height: calc(70vh - 76px);
         }
         
         .chat-body {
-            height: auto;
-            min-height: 50vh;
+            min-height: calc(50vh - 76px);
         }
         
         .prompt-grid {
@@ -501,7 +462,7 @@
         }
         
         .message-input {
-            padding-right: 6rem;
+            padding-right: 3rem; /* Adjusted for only send button */
         }
         
         .input-actions {
@@ -648,12 +609,6 @@
             <div class="message-input-container">
                 <textarea id="userInput" class="message-input" placeholder="Message DeepSeek-R1..." rows="1"></textarea>
                 <div class="input-actions">
-                    <button class="action-button" id="attachButton" title="Attach file">
-                        <i class="fas fa-paperclip"></i>
-                    </button>
-                    <button class="action-button" id="voiceButton" title="Voice input">
-                        <i class="fas fa-microphone"></i>
-                    </button>
                     <button class="send-button" id="sendButton" disabled>
                         <i class="fas fa-paper-plane"></i>
                     </button>
@@ -671,16 +626,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatMessages = document.getElementById('chatMessages');
     const userInput = document.getElementById('userInput');
     const sendButton = document.getElementById('sendButton');
-    const voiceButton = document.getElementById('voiceButton');
     const clearHistoryBtn = document.getElementById('clearHistoryBtn');
     const newChatBtn = document.getElementById('newChatBtn');
     const welcomeContainer = document.getElementById('welcomeContainer');
     const promptSuggestions = document.getElementById('promptSuggestions');
     const promptCards = document.querySelectorAll('.prompt-card');
-    
-    let recognition;
-    let isListening = false;
-    const synth = window.speechSynthesis;
 
     // Auto-resize textarea
     userInput.addEventListener('input', function() {
@@ -688,14 +638,6 @@ document.addEventListener('DOMContentLoaded', () => {
         this.style.height = Math.min(this.scrollHeight, 200) + 'px';
         sendButton.disabled = !this.value.trim();
     });
-
-    // Initialize speech recognition if available
-    if ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window) {
-        recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        recognition.continuous = false;
-        recognition.interimResults = false;
-        recognition.lang = 'en-US';
-    }
 
     // Handle prompt card clicks
     promptCards.forEach(card => {
@@ -743,7 +685,6 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             removeThinkingMessage();
             displayMessage(data.response, 'bot');
-            if (isListening && synth) speakResponse(data.response);
             updateChatHistory();
         })
         .catch(error => {
@@ -822,60 +763,6 @@ document.addEventListener('DOMContentLoaded', () => {
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    // Voice input
-    voiceButton.addEventListener('click', () => {
-        if (!recognition) {
-            displayMessage("Speech recognition is not supported in your browser.", 'bot');
-            return;
-        }
-        if (isListening) {
-            stopVoiceInput();
-        } else {
-            startVoiceInput();
-        }
-    });
-
-    if (recognition) {
-        recognition.onresult = (event) => {
-            const transcript = event.results[0][0].transcript.trim();
-            userInput.value = transcript;
-            userInput.dispatchEvent(new Event('input'));
-            sendMessage();
-            stopVoiceInput();
-        };
-
-        recognition.onerror = (event) => {
-            displayMessage(`Voice input error: ${event.error}`, 'bot');
-            stopVoiceInput();
-        };
-
-        recognition.onend = () => {
-            if (isListening) stopVoiceInput();
-        };
-    }
-
-    function startVoiceInput() {
-        isListening = true;
-        voiceButton.classList.add('listening');
-        voiceButton.innerHTML = '<i class="fas fa-microphone-slash"></i>';
-        recognition.start();
-    }
-
-    function stopVoiceInput() {
-        isListening = false;
-        voiceButton.classList.remove('listening');
-        voiceButton.innerHTML = '<i class="fas fa-microphone"></i>';
-        if (recognition) recognition.stop();
-    }
-
-    function speakResponse(text) {
-        if (!synth) return;
-        synth.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'en-US';
-        synth.speak(utterance);
-    }
-
     // Update chat history
     function updateChatHistory() {
         const historyContainer = document.getElementById('chatHistory');
@@ -885,7 +772,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const preview = firstUserMessage ? firstUserMessage.querySelector('.message-content').textContent.slice(0, 30) : 'New conversation';
             const time = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
             
-            // Update the history item or create a new one
             const existingItem = historyContainer.querySelector('.history-item.active');
             if (existingItem) {
                 existingItem.querySelector('.history-preview').textContent = preview;
@@ -907,7 +793,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 historyContainer.prepend(newHistoryItem);
             }
             
-            // Make sure all other items are not active
             document.querySelectorAll('.history-item').forEach(item => {
                 if (item !== existingItem) {
                     item.classList.remove('active');
@@ -960,33 +845,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     clearHistoryBtn.addEventListener('click', clearHistory);
     newChatBtn.addEventListener('click', startNewChat);
-    
-    // Attach button functionality
-    document.getElementById('attachButton').addEventListener('click', () => {
-        displayMessage("File attachment is not available in this demo version.", 'bot');
-    });
-
-    // Ensure the chat container is properly sized on window resize
-    window.addEventListener('resize', () => {
-        // Adjust heights for mobile view
-        if (window.innerWidth <= 992) {
-            document.querySelector('.sidebar').style.height = 'auto';
-            document.querySelector('.chat-container').style.height = 'auto';
-        } else {
-            document.querySelector('.sidebar').style.height = 'calc(100vh - 150px)';
-            document.querySelector('.chat-container').style.height = 'calc(100vh - 150px)';
-        }
-    });
-
-    // Initialize heights
-    if (window.innerWidth <= 992) {
-        document.querySelector('.sidebar').style.height = 'auto';
-        document.querySelector('.chat-container').style.height = 'auto';
-    }
 
     // Scroll to bottom on load
     scrollToBottom();
 });
 </script>
 {% endblock %}
-
