@@ -369,23 +369,44 @@
     </div>
 
     <!-- Vote Notification Script -->
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
+  <script>
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        // Get DOM elements
         const voteNotification = document.getElementById('voteNotification');
         const closeVoteBtn = document.getElementById('closeVoteNotification');
         
-        // Show notification after 1.5 seconds on every page load
-        setTimeout(() => {
+        // Check if elements exist
+        if (!voteNotification || !closeVoteBtn) {
+            console.error('Notification elements not found in DOM');
+            return;
+        }
+
+        // Show notification after 1.5 seconds
+        const showNotification = setTimeout(() => {
             voteNotification.classList.add('show');
         }, 1500);
-        
-        // Close notification when close button is clicked (only for current view)
-        closeVoteBtn.addEventListener('click', () => {
-            voteNotification.classList.remove('show');
-        });
-    });
-    </script>
 
+        // Close notification handler
+        const closeNotification = () => {
+            voteNotification.classList.remove('show');
+            // Clean up timeout if still pending
+            clearTimeout(showNotification);
+        };
+
+        // Add click event listener
+        closeVoteBtn.addEventListener('click', closeNotification);
+
+        // Optional: Clean up event listener when page unloads
+        window.addEventListener('unload', () => {
+            closeVoteBtn.removeEventListener('click', closeNotification);
+        });
+
+    } catch (error) {
+        console.error('Error in notification system:', error);
+    }
+});
+</script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>
