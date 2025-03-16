@@ -13,13 +13,16 @@
         --hover-bg: rgba(235, 248, 255, 0.8);
     }
 
+    /* Main layout structure */
     .chat-layout {
         display: flex;
         min-height: calc(100vh - 150px);
-        margin-top: -1rem;
-        margin-bottom: -1rem;
+        margin: 0;
+        padding: 1rem 0;
+        position: relative;
     }
 
+    /* Sidebar styles */
     .sidebar {
         width: var(--sidebar-width);
         background: var(--sidebar-bg);
@@ -28,6 +31,9 @@
         display: flex;
         flex-direction: column;
         transition: all 0.3s ease;
+        height: calc(100vh - 150px);
+        position: sticky;
+        top: 76px;
     }
 
     .sidebar-header {
@@ -52,6 +58,21 @@
         flex: 1;
         overflow-y: auto;
         padding: 0 1rem;
+        scrollbar-width: thin;
+        scrollbar-color: var(--primary-blue) transparent;
+    }
+
+    .chat-history::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .chat-history::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .chat-history::-webkit-scrollbar-thumb {
+        background-color: var(--primary-blue);
+        border-radius: 6px;
     }
 
     .history-item {
@@ -120,6 +141,7 @@
         margin-top: auto;
     }
 
+    /* Main chat container */
     .chat-container {
         flex: 1;
         display: flex;
@@ -127,6 +149,8 @@
         background: var(--chat-bg);
         border-radius: 0.5rem;
         overflow: hidden;
+        height: calc(100vh - 150px);
+        position: relative;
     }
 
     .chat-header {
@@ -135,11 +159,17 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
+        background: var(--chat-bg);
+        position: sticky;
+        top: 0;
+        z-index: 10;
     }
 
     .chat-title {
         font-size: 1.25rem;
         font-weight: 600;
+        display: flex;
+        align-items: center;
     }
 
     .chat-actions {
@@ -153,6 +183,22 @@
         overflow-y: auto;
         display: flex;
         flex-direction: column;
+        scrollbar-width: thin;
+        scrollbar-color: var(--primary-blue) transparent;
+        height: calc(100% - 140px); /* Adjust based on header and footer height */
+    }
+
+    .chat-body::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .chat-body::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .chat-body::-webkit-scrollbar-thumb {
+        background-color: var(--primary-blue);
+        border-radius: 6px;
     }
 
     .welcome-container {
@@ -177,26 +223,31 @@
         flex: 1;
         overflow-y: auto;
         padding-right: 0.5rem;
+        display: flex;
+        flex-direction: column;
     }
 
+    /* Message styling */
     .message {
         max-width: 80%;
         margin-bottom: 1.5rem;
         animation: messageFadeIn 0.3s ease forwards;
+        align-self: flex-start;
     }
 
     .user-message {
-        margin-left: auto;
+        align-self: flex-end;
     }
 
     .bot-message {
-        margin-right: auto;
+        align-self: flex-start;
     }
 
     .message-content {
         padding: 1rem;
         border-radius: 1rem;
         box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        word-break: break-word;
     }
 
     .user-message .message-content {
@@ -217,9 +268,14 @@
         text-align: right;
     }
 
+    /* Chat footer and input area */
     .chat-footer {
         padding: 1.25rem 1.5rem;
         border-top: 1px solid var(--border-color);
+        background: var(--chat-bg);
+        position: sticky;
+        bottom: 0;
+        z-index: 10;
     }
 
     .message-input-container {
@@ -236,6 +292,7 @@
         min-height: 60px;
         max-height: 200px;
         transition: all 0.2s ease;
+        overflow-y: auto;
     }
 
     .message-input:focus {
@@ -250,6 +307,7 @@
         bottom: 0.75rem;
         display: flex;
         gap: 0.5rem;
+        align-items: center;
     }
 
     .action-button {
@@ -296,6 +354,7 @@
         transform: none;
     }
 
+    /* Prompt suggestions */
     .prompt-suggestions {
         margin-top: 3rem;
     }
@@ -319,6 +378,7 @@
         border: 1px solid var(--border-color);
         transition: all 0.2s ease;
         cursor: pointer;
+        background: white;
     }
 
     .prompt-card:hover {
@@ -349,6 +409,7 @@
         color: var(--text-light);
     }
 
+    /* Thinking indicator */
     .thinking-indicator {
         display: inline-flex;
         align-items: center;
@@ -378,21 +439,7 @@
         to { opacity: 1; transform: translateY(0); }
     }
 
-    @media (max-width: 992px) {
-        .chat-layout {
-            flex-direction: column;
-        }
-        .sidebar {
-            width: 100%;
-            border-right: none;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 1rem;
-        }
-        .chat-history {
-            max-height: 200px;
-        }
-    }
-
+    /* Voice button styles */
     #voiceButton.listening {
         background-color: #dc3545;
         color: white;
@@ -403,6 +450,64 @@
         0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
         70% { box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
         100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 992px) {
+        .chat-layout {
+            flex-direction: column;
+            height: auto;
+        }
+        
+        .sidebar {
+            width: 100%;
+            height: auto;
+            border-right: none;
+            border-bottom: 1px solid var(--border-color);
+            position: relative;
+            top: 0;
+        }
+        
+        .chat-history {
+            max-height: 200px;
+        }
+        
+        .chat-container {
+            height: auto;
+            min-height: 70vh;
+        }
+        
+        .chat-body {
+            height: auto;
+            min-height: 50vh;
+        }
+        
+        .prompt-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .message {
+            max-width: 90%;
+        }
+        
+        .chat-header, .chat-footer {
+            padding: 1rem;
+        }
+        
+        .chat-body {
+            padding: 1rem;
+        }
+        
+        .message-input {
+            padding-right: 6rem;
+        }
+        
+        .input-actions {
+            right: 0.5rem;
+            bottom: 0.5rem;
+        }
     }
 </style>
 {% endblock %}
@@ -430,9 +535,8 @@
                                 <div class="history-time">{{ entry.timestamp|date:"M d, h:i a" }}</div>
                             </div>
                         </div>
-                        {% endif %}
-                        {% if not forloop.first %}{% endif %}
-                    {% endfor %}
+                    {% endif %}
+                {% endfor %}
             {% else %}
                 <div class="history-item active" data-id="new">
                     <div class="history-icon">
@@ -581,7 +685,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Auto-resize textarea
     userInput.addEventListener('input', function() {
         this.style.height = 'auto';
-        this.style.height = (this.scrollHeight) + 'px';
+        this.style.height = Math.min(this.scrollHeight, 200) + 'px';
         sendButton.disabled = !this.value.trim();
     });
 
@@ -780,8 +884,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const firstUserMessage = Array.from(messages).find(msg => msg.classList.contains('user-message'));
             const preview = firstUserMessage ? firstUserMessage.querySelector('.message-content').textContent.slice(0, 30) : 'New conversation';
             const time = new Date().toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-            historyContainer.innerHTML = `
-                <div class="history-item active" data-id="1">
+            
+            // Update the history item or create a new one
+            const existingItem = historyContainer.querySelector('.history-item.active');
+            if (existingItem) {
+                existingItem.querySelector('.history-preview').textContent = preview;
+                existingItem.querySelector('.history-time').textContent = time;
+            } else {
+                const newHistoryItem = document.createElement('div');
+                newHistoryItem.className = 'history-item active';
+                newHistoryItem.dataset.id = '1';
+                newHistoryItem.innerHTML = `
                     <div class="history-icon">
                         <i class="fas fa-comment-alt"></i>
                     </div>
@@ -790,8 +903,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="history-preview">${preview}</div>
                         <div class="history-time">${time}</div>
                     </div>
-                </div>
-            `;
+                `;
+                historyContainer.prepend(newHistoryItem);
+            }
+            
+            // Make sure all other items are not active
+            document.querySelectorAll('.history-item').forEach(item => {
+                if (item !== existingItem) {
+                    item.classList.remove('active');
+                }
+            });
         }
     }
 
@@ -839,9 +960,33 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     clearHistoryBtn.addEventListener('click', clearHistory);
     newChatBtn.addEventListener('click', startNewChat);
+    
+    // Attach button functionality
+    document.getElementById('attachButton').addEventListener('click', () => {
+        displayMessage("File attachment is not available in this demo version.", 'bot');
+    });
+
+    // Ensure the chat container is properly sized on window resize
+    window.addEventListener('resize', () => {
+        // Adjust heights for mobile view
+        if (window.innerWidth <= 992) {
+            document.querySelector('.sidebar').style.height = 'auto';
+            document.querySelector('.chat-container').style.height = 'auto';
+        } else {
+            document.querySelector('.sidebar').style.height = 'calc(100vh - 150px)';
+            document.querySelector('.chat-container').style.height = 'calc(100vh - 150px)';
+        }
+    });
+
+    // Initialize heights
+    if (window.innerWidth <= 992) {
+        document.querySelector('.sidebar').style.height = 'auto';
+        document.querySelector('.chat-container').style.height = 'auto';
+    }
 
     // Scroll to bottom on load
     scrollToBottom();
 });
 </script>
 {% endblock %}
+
