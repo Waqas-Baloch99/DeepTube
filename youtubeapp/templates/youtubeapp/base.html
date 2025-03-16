@@ -360,23 +360,15 @@
         const voteNotification = document.getElementById('voteNotification');
         const closeVoteBtn = document.getElementById('closeVoteNotification');
         
-        // Show notification after 3 seconds
+        // Show notification after 2 seconds on every page load
         setTimeout(() => {
             voteNotification.classList.add('show');
-        }, 3000);
+        }, 2000);
         
-        // Close notification when close button is clicked
+        // Close notification when close button is clicked (only for current view)
         closeVoteBtn.addEventListener('click', () => {
             voteNotification.classList.remove('show');
-            
-            // Store in localStorage to prevent showing again in the same session
-            localStorage.setItem('voteNotificationClosed', 'true');
         });
-        
-        // Check if notification was previously closed
-        if (localStorage.getItem('voteNotificationClosed') === 'true') {
-            voteNotification.style.display = 'none';
-        }
     });
     </script>
 
