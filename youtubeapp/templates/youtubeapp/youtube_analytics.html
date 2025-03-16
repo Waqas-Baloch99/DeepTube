@@ -103,17 +103,23 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div class="row">
+                <div class="row g-4">
                     <div class="col-md-6">
-                        <img id="modalThumbnail" class="img-fluid rounded" alt="Video Thumbnail">
+                        <img id="modalThumbnail" class="img-fluid rounded w-100" alt="Video Thumbnail">
                     </div>
-                    <div class="col-md-6" style="margin-top:20px;">
-                        <h6 id="modalTitle" class="fw-medium"></h6>
-                        <p id="modalChannel" class="text-muted small"></p>
-                        <p><strong>Views:</strong> <span id="modalViews"></span></p>
-                        <p><strong>Description:</strong></p>
-                        <p id="modalDescription" class="text-muted"></p>
-                        <a id="modalUrl" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary glow-effect mt-2">Watch on YouTube</a>
+                    <div class="col-md-6">
+                        <h6 id="modalTitle" class="fw-medium mb-2"></h6>
+                        <p id="modalChannel" class="text-muted small mb-2"></p>
+                        <p class="mb-2"><strong>Views:</strong> <span id="modalViews"></span></p>
+                        <div class="mt-3">
+                            <p class="mb-1"><strong>Description:</strong></p>
+                            <div id="modalDescription" class="text-muted small overflow-auto" style="max-height: 150px;"></div>
+                        </div>
+                        <div class="mt-3 text-center text-md-start">
+                            <a id="modalUrl" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary glow-effect">
+                                <i class="fas fa-external-link-alt me-2"></i>Watch on YouTube
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -212,13 +218,15 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('modalTitle').textContent = video.title;
         document.getElementById('modalChannel').textContent = `Channel: ${video.channel}`;
         document.getElementById('modalViews').textContent = formatNumber(parseInt(video.view_count));
-        document.getElementById('modalDescription').textContent = video.description;
-        
+        document.getElementById('modalDescription').textContent = video.description || "No description available.";
+    
         // Ensure the URL is valid and fully qualified
-        const fullUrl = ensureFullUrl(video.url);
+        let fullUrl = video.url;
+        if (fullUrl && !fullUrl.startsWith('http://') && !fullUrl.startsWith('https://')) {
+            fullUrl = 'https://www.youtube.com/watch?v=' + fullUrl.replace(/.*v=/, '').split('&')[0];
+        }
+    
         modalUrl.href = fullUrl;
-        console.log('YouTube URL set to:', fullUrl); // Debug log
-
         videoModal.show();
     }
 
@@ -367,5 +375,39 @@ document.addEventListener('DOMContentLoaded', () => {
 #totalViews {
     font-weight: 500;
 }
+
+.modal-content {
+    overflow: hidden;
+}
+
+#modalTitle {
+    font-size: 1.1rem;
+    line-height: 1.4;
+}
+
+#modalDescription {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    padding-right: 5px;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+@media (max-width: 767px) {
+    .modal-body .row > div:first-child {
+        margin-bottom: 1rem;
+    }
+    
+    #modalTitle, #modalChannel, #modalViews {
+        text-align: center;
+    }
+    
+    #modalDescription {
+        text-align: left;
+    }
+}
 </style>
 {% endblock %}
+
