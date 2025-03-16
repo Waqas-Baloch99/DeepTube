@@ -2,10 +2,10 @@
 {% load static %}
 
 {% block content %}
-<div class="container-fluid px-0 py-5"> <!-- Changed to container-fluid for full width -->
+<div class="container-fluid px-0 py-5">
     <!-- Error Banner -->
     <div class="row mb-4 {% if not error %}d-none{% endif %}" id="errorBanner">
-        <div class="col-12 px-4"> <!-- Added padding for content -->
+        <div class="col-12 px-4">
             <div class="alert alert-warning alert-dismissible fade show shadow-sm" role="alert">
                 <h4 class="alert-heading">Data Fetch Issue</h4>
                 <p>{{ error|default:"We're experiencing temporary issues fetching trending videos. Using cached data instead." }}</p>
@@ -16,7 +16,7 @@
 
     <!-- Logo & Tagline Section -->
     <div class="row mb-5 text-center">
-        <div class="col-12 px-4"> <!-- Added padding -->
+        <div class="col-12 px-4">
             <div class="logo-container glass-effect p-4 rounded-4 shadow-sm">
                 <h1 class="display-4 fw-bold">DeepTube <span class="text-gradient">AI Assistant</span></h1>
                 <p class="lead text-muted mt-2">Discover and create engaging content with AI-powered insights</p>
@@ -26,11 +26,11 @@
 
     <!-- Trending Videos Section -->
     <div class="row mb-5">
-        <div class="col-12 px-4"> <!-- Added padding -->
+        <div class="col-12 px-4">
             <div class="tags-container glass-effect p-4 rounded-4 shadow-sm">
-                <div class="section-header mb-3 d-flex justify-content-between align-items-center flex-wrap"> <!-- Added flex-wrap -->
+                <div class="section-header mb-3 d-flex justify-content-between align-items-center flex-wrap">
                     <h4 class="fw-bold"><i class="fas fa-fire me-2"></i>Trending YouTube Videos</h4>
-                    <select id="regionSelect" class="form-select w-auto ms-3"> <!-- Added margin for spacing -->
+                    <select id="regionSelect" class="form-select w-auto ms-3">
                         <option value="US" {% if region_code == 'US' %}selected{% endif %}>United States</option>
                         <option value="GB" {% if region_code == 'GB' %}selected{% endif %}>United Kingdom</option>
                         <option value="CA" {% if region_code == 'CA' %}selected{% endif %}>Canada</option>
@@ -49,8 +49,8 @@
                         </div>
                     {% endif %}
                 </div>
-                <div class="d-flex justify-content-between align-items-center mt-4 flex-wrap"> <!-- Added flex-wrap -->
-                    <button class="btn btn-primary glow-effect me-3" id="refreshVideos"> <!-- Added margin -->
+                <div class="d-flex justify-content-between align-items-center mt-4 flex-wrap">
+                    <button class="btn btn-primary glow-effect me-3" id="refreshVideos">
                         <i class="fas fa-sync-alt me-2"></i> Refresh Videos
                     </button>
                     <span class="text-muted small" id="lastUpdated">Last updated: {{ last_updated }}</span>
@@ -62,7 +62,7 @@
     </div>
 
     <!-- Features Section -->
-    <div class="row g-4 px-4"> <!-- Added padding -->
+    <div class="row g-4 px-4">
         <div class="col-md-6">
             <div class="feature-card glass-effect p-4 rounded-4 shadow-sm h-100">
                 <div class="section-header mb-3">
@@ -113,7 +113,7 @@
                         <p><strong>Views:</strong> <span id="modalViews"></span></p>
                         <p><strong>Description:</strong></p>
                         <p id="modalDescription" class="text-muted"></p>
-                        <a id="modalUrl" href="#" target="_blank" class="btn btn-primary glow-effect mt-2">Watch on YouTube</a>
+                        <a id="modalUrl" href="#" target="_blank" rel="noopener noreferrer" class="btn btn-primary glow-effect mt-2">Watch on YouTube</a>
                     </div>
                 </div>
             </div>
@@ -140,6 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
         backdrop: true,
         keyboard: true
     });
+    const modalUrl = document.getElementById('modalUrl');
 
     // Parse initial data with error handling
     let initialTrendingVideos = [];
@@ -155,6 +156,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
         if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
         return num.toString();
+    }
+
+    function ensureFullUrl(url) {
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+            return 'https://' + url; // Assume HTTPS for YouTube links
+        }
+        return url;
     }
 
     function renderTrendingVideos(videos) {
@@ -205,9 +213,22 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('modalChannel').textContent = `Channel: ${video.channel}`;
         document.getElementById('modalViews').textContent = formatNumber(parseInt(video.view_count));
         document.getElementById('modalDescription').textContent = video.description;
-        document.getElementById('modalUrl').href = video.url;
+        
+        // Ensure the URL is valid and fully qualified
+        const fullUrl = ensureFullUrl(video.url);
+        modalUrl.href = fullUrl;
+        console.log('YouTube URL set to:', fullUrl); // Debug log
+
         videoModal.show();
     }
+
+    // Explicitly handle "Watch on YouTube" click
+    modalUrl.addEventListener('click', (e) => {
+        e.preventDefault(); // Prevent default if needed for debugging
+        const url = modalUrl.href;
+        console.log('Attempting to open:', url); // Debug log
+        window.open(url, '_blank'); // Force open in new tab
+    });
 
     async function updateRegion() {
         try {
