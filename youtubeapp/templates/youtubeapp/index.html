@@ -5,52 +5,33 @@
 
 {% block extra_css %}
 <style>
-    :root {
-        --sidebar-width: 260px;
-        --sidebar-bg: rgba(255, 255, 255, 0.9);
-        --chat-bg: #ffffff;
-        --border-color: rgba(203, 213, 224, 0.3);
-        --hover-bg: rgba(235, 248, 255, 0.8);
-        --primary-blue: #2b6cb0;
-        --text-light: #6c757d;
-    }
-
-    /* Ensure full-page layout */
-    body {
-        margin: 0;
-        padding: 0;
-        overflow-x: hidden; /* Prevent horizontal scroll */
-    }
-
-    /* Main layout structure */
     .chat-layout {
         display: flex;
-        min-height: calc(100vh - 76px); /* Adjust for navbar height */
+        min-height: calc(100vh - 76px);
         margin: 0;
         padding: 0;
         box-sizing: border-box;
-        width: 100vw; /* Full viewport width */
-        max-width: 100%; /* Prevent overflow */
+        width: 100vw;
+        max-width: 100%;
     }
 
-    /* Sidebar styles */
     .sidebar {
-        width: var(--sidebar-width);
-        min-width: var(--sidebar-width); /* Prevent shrinking */
-        background: var(--sidebar-bg);
-        border-right: 1px solid var(--border-color);
+        width: 260px;
+        min-width: 260px;
+        background: rgba(255, 255, 255, 0.9);
+        border-right: 1px solid rgba(203, 213, 224, 0.3);
         padding: 1.5rem 0;
         display: flex;
         flex-direction: column;
         transition: all 0.3s ease;
         height: calc(100vh - 76px);
         overflow-y: auto;
-        flex-shrink: 0; /* Prevent sidebar from shrinking */
+        flex-shrink: 0;
     }
 
     .sidebar-header {
         padding: 0 1.5rem 1.5rem;
-        border-bottom: 1px solid var(--border-color);
+        border-bottom: 1px solid rgba(203, 213, 224, 0.3);
         margin-bottom: 1rem;
     }
 
@@ -74,19 +55,6 @@
         scrollbar-color: var(--primary-blue) transparent;
     }
 
-    .chat-history::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .chat-history::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
-    .chat-history::-webkit-scrollbar-thumb {
-        background-color: var(--primary-blue);
-        border-radius: 6px;
-    }
-
     .history-item {
         padding: 0.75rem 1rem;
         border-radius: 0.5rem;
@@ -99,12 +67,12 @@
     }
 
     .history-item:hover {
-        background: var(--hover-bg);
+        background: rgba(235, 248, 255, 0.8);
         border-left-color: var(--primary-blue);
     }
 
     .history-item.active {
-        background: var(--hover-bg);
+        background: rgba(235, 248, 255, 0.8);
         border-left-color: var(--primary-blue);
     }
 
@@ -149,30 +117,29 @@
 
     .sidebar-footer {
         padding: 1rem 1.5rem;
-        border-top: 1px solid var(--border-color);
+        border-top: 1px solid rgba(203, 213, 224, 0.3);
         margin-top: auto;
     }
 
-    /* Main chat container */
     .chat-container {
         flex: 1;
         display: flex;
         flex-direction: column;
-        background: var(--chat-bg);
-        border-radius: 0; /* Remove border-radius for full width */
+        background: #ffffff;
+        border-radius: 0;
         overflow: hidden;
         height: calc(100vh - 76px);
-        min-width: 0; /* Prevent overflow */
-        width: 100%; /* Ensure full width */
+        min-width: 0;
+        width: 100%;
     }
 
     .chat-header {
         padding: 1.25rem 1.5rem;
-        border-bottom: 1px solid var(--border-color);
+        border-bottom: 1px solid rgba(203, 213, 224, 0.3);
         display: flex;
         align-items: center;
         justify-content: space-between;
-        background: var(--chat-bg);
+        background: rgba(255, 255, 255, 0.9);
         z-index: 10;
     }
 
@@ -196,19 +163,6 @@
         flex-direction: column;
         scrollbar-width: thin;
         scrollbar-color: var(--primary-blue) transparent;
-    }
-
-    .chat-body::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .chat-body::-webkit-scrollbar-track {
-        background: transparent;
-    }
-
-    .chat-body::-webkit-scrollbar-thumb {
-        background-color: var(--primary-blue);
-        border-radius: 6px;
     }
 
     .welcome-container {
@@ -237,7 +191,6 @@
         flex-direction: column;
     }
 
-    /* Message styling */
     .message {
         max-width: 80%;
         margin-bottom: 1.5rem;
@@ -278,11 +231,10 @@
         text-align: right;
     }
 
-    /* Chat footer and input area */
     .chat-footer {
         padding: 1.25rem 1.5rem;
-        border-top: 1px solid var(--border-color);
-        background: var(--chat-bg);
+        border-top: 1px solid rgba(203, 213, 224, 0.3);
+        background: rgba(255, 255, 255, 0.9);
         z-index: 10;
     }
 
@@ -292,8 +244,8 @@
 
     .message-input {
         width: 100%;
-        padding: 1rem 4rem 1rem 1rem;
-        border: 1px solid var(--border-color);
+        padding: 1rem 5rem 1rem 1rem;
+        border: 1px solid rgba(203, 213, 224, 0.3);
         border-radius: 0.75rem;
         resize: none;
         min-height: 60px;
@@ -318,87 +270,47 @@
         align-items: center;
     }
 
-    .send-button {
+    .send-button, .mic-button {
         width: 36px;
         height: 36px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        background: var(--primary-blue);
         border: none;
         color: white;
         cursor: pointer;
         transition: all 0.2s ease;
     }
 
-    .send-button:hover {
+    .send-button {
         background: var(--primary-blue);
+    }
+
+    .mic-button {
+        background: #dc3545;
+    }
+
+    .send-button:hover {
+        background: var(--hover-blue);
         transform: translateY(-2px);
     }
 
-    .send-button:disabled {
+    .mic-button:hover {
+        background: #c82333;
+        transform: translateY(-2px);
+    }
+
+    .mic-button.recording {
+        background: #28a745;
+    }
+
+    .send-button:disabled, .mic-button:disabled {
         background: #cbd5e0;
         cursor: not-allowed;
         transform: none;
     }
 
-    /* Prompt suggestions */
-    .prompt-suggestions {
-        margin-top: 3rem;
-    }
-
-    .prompt-title {
-        font-size: 1.25rem;
-        font-weight: 600;
-        margin-bottom: 1.5rem;
-        text-align: center;
-    }
-
-    .prompt-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 1.5rem;
-    }
-
-    .prompt-card {
-        padding: 1.5rem;
-        border-radius: 0.75rem;
-        border: 1px solid var(--border-color);
-        transition: all 0.2s ease;
-        cursor: pointer;
-        background: white;
-    }
-
-    .prompt-card:hover {
-        border-color: var(--primary-blue);
-        transform: translateY(-3px);
-        box-shadow: 0 10px 25px rgba(43, 108, 176, 0.1);
-    }
-
-    .prompt-icon {
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: var(--hover-bg);
-        color: var(--primary-blue);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 1rem;
-    }
-
-    .prompt-card-title {
-        font-weight: 600;
-        margin-bottom: 0.5rem;
-    }
-
-    .prompt-description {
-        font-size: 0.875rem;
-        color: var(--text-light);
-    }
-
-    /* Thinking indicator */
     .thinking-indicator {
         display: inline-flex;
         align-items: center;
@@ -428,62 +340,26 @@
         to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Responsive adjustments */
     @media (max-width: 992px) {
         .chat-layout {
             flex-direction: column;
             height: auto;
             min-height: calc(100vh - 76px);
-            width: 100vw; /* Full width on smaller screens */
+            width: 100vw;
         }
-        
+
         .sidebar {
             width: 100%;
-            min-width: 100%; /* Full width */
+            min-width: 100%;
             height: auto;
             border-right: none;
-            border-bottom: 1px solid var(--border-color);
+            border-bottom: 1px solid rgba(203, 213, 224, 0.3);
         }
-        
-        .chat-history {
-            max-height: 200px;
-        }
-        
+
         .chat-container {
             height: auto;
             min-height: calc(70vh - 76px);
-            width: 100%; /* Ensure full width */
-        }
-        
-        .chat-body {
-            min-height: calc(50vh - 76px);
-        }
-        
-        .prompt-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    @media (max-width: 576px) {
-        .message {
-            max-width: 90%;
-        }
-        
-        .chat-header, .chat-footer {
-            padding: 1rem;
-        }
-        
-        .chat-body {
-            padding: 1rem;
-        }
-        
-        .message-input {
-            padding-right: 3rem;
-        }
-        
-        .input-actions {
-            right: 0.5rem;
-            bottom: 0.5rem;
+            width: 100%;
         }
     }
 </style>
@@ -491,52 +367,33 @@
 
 {% block content %}
 <div class="chat-layout">
-    <!-- Sidebar with Chat History -->
-    <div class="sidebar" ">
+    <!-- Sidebar -->
+    <div class="sidebar" style="margin-top: 10px;">
         <div class="sidebar-header">
             <div class="sidebar-title">DeepSeek Chat</div>
             <div class="sidebar-subtitle">Your YouTube Strategy Expert</div>
         </div>
-        
         <div class="chat-history" id="chatHistory">
-            {% if chat_history %}
-                {% for entry in chat_history %}
-                    {% if entry.user %}
-                        <div class="history-item {% if forloop.first %}active{% endif %}" data-id="{{ forloop.counter }}">
-                            <div class="history-icon">
-                                <i class="fas fa-comment-alt"></i>
-                            </div>
-                            <div class="history-content">
-                                <div class="history-title">Chat {{ forloop.counter }}</div>
-                                <div class="history-preview">{{ entry.user|truncatechars:30 }}</div>
-                                <div class="history-time">{{ entry.timestamp|date:"M d, h:i a" }}</div>
-                            </div>
-                        </div>
-                    {% endif %}
-                {% endfor %}
-            {% else %}
-                <div class="history-item active" data-id="new">
-                    <div class="history-icon">
-                        <i class="fas fa-comment-alt"></i>
-                    </div>
-                    <div class="history-content">
-                        <div class="history-title">New Chat</div>
-                        <div class="history-preview">Start a new conversation</div>
-                        <div class="history-time">Now</div>
-                    </div>
+            <div class="history-item active" data-id="new">
+                <div class="history-icon">
+                    <i class="fas fa-comment-alt"></i>
                 </div>
-            {% endif %}
+                <div class="history-content">
+                    <div class="history-title">New Chat</div>
+                    <div class="history-preview">Start a new conversation</div>
+                    <div class="history-time">Now</div>
+                </div>
+            </div>
         </div>
-        
         <div class="sidebar-footer">
             <button class="btn btn-outline-danger btn-sm w-100" id="clearHistoryBtn">
                 <i class="fas fa-trash me-2"></i> Clear All History
             </button>
         </div>
     </div>
-    
+
     <!-- Main Chat Area -->
-    <div class="chat-container" ">
+    <div class="chat-container" style="margin-top: 20px;">
         <div class="chat-header">
             <div class="chat-title">
                 <i class="fas fa-robot me-2 text-primary"></i> Chat with DeepSeek-R1
@@ -547,84 +404,36 @@
                 </button>
             </div>
         </div>
-        
+
         <div class="chat-body">
-            <div id="welcomeContainer" class="welcome-container {% if chat_history %}d-none{% endif %}">
+            <div id="welcomeContainer" class="welcome-container">
                 <div class="welcome-title">Welcome to DeepSeek-R1</div>
                 <div class="welcome-subtitle">Your YouTube Strategy Expert</div>
             </div>
-            
+
             <div class="chat-messages" id="chatMessages">
-                {% if chat_history %}
-                    {% for entry in chat_history %}
-                        {% if entry.user %}
-                            <div class="message user-message">
-                                <div class="message-content">{{ entry.user }}</div>
-                                <div class="message-timestamp">{{ entry.timestamp|date:"H:i" }}</div>
+                <div class="message bot-message">
+                    <div class="message-content">
+                        <div class="d-flex align-items-center mb-2">
+                            <div class="rounded-circle bg-primary p-1 me-2" style="width: 24px; height: 24px;">
+                                <img src="{% static 'youtubeapp/images/deepseek-logo.png' %}" alt="DeepSeek" width="16" height="16" class="rounded-circle">
                             </div>
-                        {% endif %}
-                        {% if entry.bot %}
-                            <div class="message bot-message">
-                                <div class="message-content">
-                                    <div class="d-flex align-items-center mb-2">
-                                        <div class="rounded-circle bg-primary p-1 me-2" style="width: 24px; height: 24px;">
-                                            <img src="{% static 'youtubeapp/images/deepseek-logo.png' %}" alt="DeepSeek" width="16" height="16" class="rounded-circle">
-                                        </div>
-                                        <strong class="small">DeepSeek-R1</strong>
-                                    </div>
-                                    {{ entry.bot }}
-                                </div>
-                                <div class="message-timestamp">{{ entry.timestamp|date:"H:i" }}</div>
-                            </div>
-                        {% endif %}
-                    {% endfor %}
-                {% else %}
-                    <div class="message bot-message">
-                        <div class="message-content">
-                            <div class="d-flex align-items-center mb-2">
-                                <div class="rounded-circle bg-primary p-1 me-2" style="width: 24px; height: 24px;">
-                                    <img src="{% static 'youtubeapp/images/deepseek-logo.png' %}" alt="DeepSeek" width="16" height="16" class="rounded-circle">
-                                </div>
-                                <strong class="small">DeepSeek-R1</strong>
-                            </div>
-                            Hello! I'm DeepSeek-R1, your YouTube strategy expert. How can I assist you today?
+                            <strong class="small">DeepSeek-R1</strong>
                         </div>
-                        <div class="message-timestamp">{{ last_updated|date:"H:i" }}</div>
+                        Hello! I'm DeepSeek-R1, your YouTube strategy expert. How can I assist you today?
                     </div>
-                {% endif %}
-            </div>
-            
-            <div class="prompt-suggestions" id="promptSuggestions" {% if chat_history %}style="display: none;"{% endif %}>
-                <div class="prompt-title">Explore with these prompts</div>
-                <div class="prompt-grid">
-                    <div class="prompt-card" data-prompt="Suggest a YouTube video title for a cooking channel">
-                        <div class="prompt-icon"><i class="fas fa-pen-fancy"></i></div>
-                        <div class="prompt-card-title">Content Ideas</div>
-                        <div class="prompt-description">Get creative ideas for YouTube videos</div>
-                    </div>
-                    <div class="prompt-card" data-prompt="Analyze my latest YouTube video performance">
-                        <div class="prompt-icon"><i class="fas fa-chart-line"></i></div>
-                        <div class="prompt-card-title">Analytics</div>
-                        <div class="prompt-description">Understand your channel's performance</div>
-                    </div>
-                    <div class="prompt-card" data-prompt="Write a script for a 5-minute tech review">
-                        <div class="prompt-icon"><i class="fas fa-code"></i></div>
-                        <div class="prompt-card-title">Script Writing</div>
-                        <div class="prompt-description">Generate scripts for your videos</div>
-                    </div>
-                    <div class="prompt-card" data-prompt="Explain YouTube SEO in simple terms">
-                        <div class="prompt-icon"><i class="fas fa-graduation-cap"></i></div>
-                        <div class="prompt-card-title">Learning</div>
-                        <div class="prompt-description">Master YouTube strategies easily</div>
-                    </div>
+                    <div class="message-timestamp">{{ "now"|date:"H:i" }}</div>
                 </div>
             </div>
         </div>
-        
+
         <div class="chat-footer">
             <div class="message-input-container">
-                <textarea id="userInput" class="message-input" placeholder="Message DeepSeek-R1..." rows="1"></textarea>
+                <textarea id="userInput" class="message-input" placeholder="Message DeepSeek-R1 or use microphone..." rows="1"></textarea>
                 <div class="input-actions">
+                    <button class="mic-button" id="micButton" title="Voice Input">
+                        <i class="fas fa-microphone"></i>
+                    </button>
                     <button class="send-button" id="sendButton" disabled>
                         <i class="fas fa-paper-plane"></i>
                     </button>
@@ -642,11 +451,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const chatMessages = document.getElementById('chatMessages');
     const userInput = document.getElementById('userInput');
     const sendButton = document.getElementById('sendButton');
+    const micButton = document.getElementById('micButton');
     const clearHistoryBtn = document.getElementById('clearHistoryBtn');
     const newChatBtn = document.getElementById('newChatBtn');
     const welcomeContainer = document.getElementById('welcomeContainer');
-    const promptSuggestions = document.getElementById('promptSuggestions');
-    const promptCards = document.querySelectorAll('.prompt-card');
+
+    // Speech recognition setup
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = SpeechRecognition ? new SpeechRecognition() : null;
+    
+    if (recognition) {
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
+    } else {
+        micButton.disabled = true;
+        micButton.title = "Speech recognition not supported in this browser";
+    }
 
     // Auto-resize textarea
     userInput.addEventListener('input', function() {
@@ -655,16 +476,41 @@ document.addEventListener('DOMContentLoaded', () => {
         sendButton.disabled = !this.value.trim();
     });
 
-    // Handle prompt card clicks
-    promptCards.forEach(card => {
-        card.addEventListener('click', () => {
-            userInput.value = card.dataset.prompt;
-            userInput.dispatchEvent(new Event('input'));
-            userInput.focus();
-            userInput.scrollIntoView({ behavior: 'smooth' });
-            promptSuggestions.style.display = 'none';
-        });
+    // Voice input handling
+    micButton.addEventListener('click', () => {
+        if (!recognition || micButton.disabled) return;
+
+        if (micButton.classList.contains('recording')) {
+            recognition.stop();
+        } else {
+            recognition.start();
+            micButton.classList.add('recording');
+            micButton.querySelector('i').classList.remove('fa-microphone');
+            micButton.querySelector('i').classList.add('fa-stop');
+            userInput.placeholder = 'Listening...';
+        }
     });
+
+    if (recognition) {
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            userInput.value = transcript;
+            userInput.dispatchEvent(new Event('input'));
+        };
+
+        recognition.onend = () => {
+            micButton.classList.remove('recording');
+            micButton.querySelector('i').classList.remove('fa-stop');
+            micButton.querySelector('i').classList.add('fa-microphone');
+            userInput.placeholder = 'Message DeepSeek-R1 or use microphone...';
+        };
+
+        recognition.onerror = (event) => {
+            console.error('Speech recognition error:', event.error);
+            displayMessage('Error with voice input: ' + event.error, 'bot');
+            recognition.stop();
+        };
+    }
 
     // Send message
     function sendMessage() {
@@ -672,15 +518,15 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!message) return;
 
         welcomeContainer.classList.add('d-none');
-        promptSuggestions.style.display = 'none';
 
         displayMessage(message, 'user');
         userInput.value = '';
         userInput.style.height = 'auto';
         sendButton.disabled = true;
+        micButton.disabled = true;
         displayThinkingMessage();
 
-        fetch('{% url "youtubeapp:index" %}', {
+        fetch('{% url "youtubeapp:index" %}', {  // Adjusted to a more specific 'chat' endpoint
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -692,54 +538,45 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(response => {
             if (!response.ok) {
                 if (response.status === 503) {
-                    throw new Error('Service Unavailable. The server is temporarily unable to handle the request. Please try again later.');
+                    throw new Error('Service Unavailable. Please try again later.');
                 }
-                throw new Error(`Server error: ${response.status} - ${response.statusText}`);
+                throw new Error(`Server error: ${response.status}`);
             }
             return response.json();
         })
         .then(data => {
             removeThinkingMessage();
-            displayMessage(data.response, 'bot');
+            displayMessage(data.response, 'bot');  // Assumes backend returns { "response": "..." }
             updateChatHistory();
         })
         .catch(error => {
             removeThinkingMessage();
-            if (error.message.includes('Service Unavailable')) {
-                displayMessage('The server is temporarily unavailable. Please try again in a few minutes.', 'bot');
-            } else {
-                displayMessage(`Error: ${error.message}`, 'bot');
-            }
+            displayMessage(`Error: ${error.message}`, 'bot');
             console.error('Chat error:', error);
         })
         .finally(() => {
             sendButton.disabled = false;
+            micButton.disabled = false;
             scrollToBottom();
         });
     }
 
-    // Display message
     function displayMessage(content, sender) {
         const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         const messageDiv = document.createElement('div');
         messageDiv.className = `message ${sender}-message`;
         
-        let html = '';
-        if (sender === 'bot') {
-            html = `
-                <div class="message-content">
-                    <div class="d-flex align-items-center mb-2">
-                        <div class="rounded-circle bg-primary p-1 me-2" style="width: 24px; height: 24px;">
-                            <img src="{% static 'youtubeapp/images/deepseek-logo.png' %}" alt="DeepSeek" width="16" height="16" class="rounded-circle">
-                        </div>
-                        <strong class="small">DeepSeek-R1</strong>
+        let html = sender === 'bot' ? `
+            <div class="message-content">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="rounded-circle bg-primary p-1 me-2" style="width: 24px; height: 24px;">
+                        <img src="{% static 'youtubeapp/images/deepseek-logo.png' %}" alt="DeepSeek" width="16" height="16" class="rounded-circle">
                     </div>
-                    ${content}
+                    <strong class="small">DeepSeek-R1</strong>
                 </div>
-            `;
-        } else {
-            html = `<div class="message-content">${content}</div>`;
-        }
+                ${content}
+            </div>
+        ` : `<div class="message-content">${content}</div>`;
         html += `<div class="message-timestamp">${time}</div>`;
         
         messageDiv.innerHTML = html;
@@ -747,7 +584,6 @@ document.addEventListener('DOMContentLoaded', () => {
         scrollToBottom();
     }
 
-    // Display thinking indicator
     function displayThinkingMessage() {
         const thinkingDiv = document.createElement('div');
         thinkingDiv.id = 'thinkingMessage';
@@ -779,7 +615,6 @@ document.addEventListener('DOMContentLoaded', () => {
         chatMessages.scrollTop = chatMessages.scrollHeight;
     }
 
-    // Update chat history
     function updateChatHistory() {
         const historyContainer = document.getElementById('chatHistory');
         const messages = chatMessages.querySelectorAll('.message');
@@ -792,66 +627,24 @@ document.addEventListener('DOMContentLoaded', () => {
             if (existingItem) {
                 existingItem.querySelector('.history-preview').textContent = preview;
                 existingItem.querySelector('.history-time').textContent = time;
-            } else {
-                const newHistoryItem = document.createElement('div');
-                newHistoryItem.className = 'history-item active';
-                newHistoryItem.dataset.id = '1';
-                newHistoryItem.innerHTML = `
-                    <div class="history-icon">
-                        <i class="fas fa-comment-alt"></i>
-                    </div>
-                    <div class="history-content">
-                        <div class="history-title">Current Chat</div>
-                        <div class="history-preview">${preview}</div>
-                        <div class="history-time">${time}</div>
-                    </div>
-                `;
-                historyContainer.prepend(newHistoryItem);
             }
-            
-            document.querySelectorAll('.history-item').forEach(item => {
-                if (item !== existingItem) {
-                    item.classList.remove('active');
-                }
-            });
         }
     }
 
-    // Start new chat
     function startNewChat() {
         chatMessages.innerHTML = '';
         welcomeContainer.classList.remove('d-none');
-        promptSuggestions.style.display = 'block';
         displayMessage("Hello! I'm DeepSeek-R1, your YouTube strategy expert. How can I assist you today?", 'bot');
         document.querySelectorAll('.history-item').forEach(item => item.classList.remove('active'));
         updateChatHistory();
     }
 
-    // Clear history
     function clearHistory() {
-        if (!confirm('Are you sure you want to clear all chat history? This cannot be undone.')) return;
-        
-        fetch('{% url "youtubeapp:clear_chat_history" %}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken,
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => {
-            if (!response.ok) throw new Error('Failed to clear history');
-            return response.json();
-        })
-        .then(data => {
+        if (confirm('Are you sure you want to clear all chat history?')) {
             startNewChat();
-        })
-        .catch(error => {
-            displayMessage(`Error clearing history: ${error.message}`, 'bot');
-        });
+        }
     }
 
-    // Event listeners
     sendButton.addEventListener('click', sendMessage);
     userInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -862,7 +655,6 @@ document.addEventListener('DOMContentLoaded', () => {
     clearHistoryBtn.addEventListener('click', clearHistory);
     newChatBtn.addEventListener('click', startNewChat);
 
-    // Scroll to bottom on load
     scrollToBottom();
 });
 </script>
