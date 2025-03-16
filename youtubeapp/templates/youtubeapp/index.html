@@ -15,26 +15,37 @@
         --text-light: #6c757d;
     }
 
+    /* Ensure full-page layout */
+    body {
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden; /* Prevent horizontal scroll */
+    }
+
     /* Main layout structure */
     .chat-layout {
         display: flex;
-        min-height: calc(100vh - 76px); /* Adjust based on header height */
+        min-height: calc(100vh - 76px); /* Adjust for navbar height */
         margin: 0;
         padding: 0;
         box-sizing: border-box;
+        width: 100vw; /* Full viewport width */
+        max-width: 100%; /* Prevent overflow */
     }
 
     /* Sidebar styles */
     .sidebar {
         width: var(--sidebar-width);
+        min-width: var(--sidebar-width); /* Prevent shrinking */
         background: var(--sidebar-bg);
         border-right: 1px solid var(--border-color);
         padding: 1.5rem 0;
         display: flex;
         flex-direction: column;
         transition: all 0.3s ease;
-        height: calc(100vh - 76px); /* Ensure sidebar takes full height minus header */
+        height: calc(100vh - 76px);
         overflow-y: auto;
+        flex-shrink: 0; /* Prevent sidebar from shrinking */
     }
 
     .sidebar-header {
@@ -148,9 +159,11 @@
         display: flex;
         flex-direction: column;
         background: var(--chat-bg);
-        border-radius: 0.5rem;
+        border-radius: 0; /* Remove border-radius for full width */
         overflow: hidden;
-        height: calc(100vh - 76px); /* Ensure chat container takes full height minus header */
+        height: calc(100vh - 76px);
+        min-width: 0; /* Prevent overflow */
+        width: 100%; /* Ensure full width */
     }
 
     .chat-header {
@@ -279,7 +292,7 @@
 
     .message-input {
         width: 100%;
-        padding: 1rem 4rem 1rem 1rem; /* Adjusted padding to accommodate only send button */
+        padding: 1rem 4rem 1rem 1rem;
         border: 1px solid var(--border-color);
         border-radius: 0.75rem;
         resize: none;
@@ -421,10 +434,12 @@
             flex-direction: column;
             height: auto;
             min-height: calc(100vh - 76px);
+            width: 100vw; /* Full width on smaller screens */
         }
         
         .sidebar {
             width: 100%;
+            min-width: 100%; /* Full width */
             height: auto;
             border-right: none;
             border-bottom: 1px solid var(--border-color);
@@ -437,6 +452,7 @@
         .chat-container {
             height: auto;
             min-height: calc(70vh - 76px);
+            width: 100%; /* Ensure full width */
         }
         
         .chat-body {
@@ -462,7 +478,7 @@
         }
         
         .message-input {
-            padding-right: 3rem; /* Adjusted for only send button */
+            padding-right: 3rem;
         }
         
         .input-actions {
@@ -476,7 +492,7 @@
 {% block content %}
 <div class="chat-layout">
     <!-- Sidebar with Chat History -->
-    <div class="sidebar">
+    <div class="sidebar" style="margin-top: 10px;">
         <div class="sidebar-header">
             <div class="sidebar-title">DeepSeek Chat</div>
             <div class="sidebar-subtitle">Your YouTube Strategy Expert</div>
@@ -520,7 +536,7 @@
     </div>
     
     <!-- Main Chat Area -->
-    <div class="chat-container">
+    <div class="chat-container" style="margin-top: 20px;">
         <div class="chat-header">
             <div class="chat-title">
                 <i class="fas fa-robot me-2 text-primary"></i> Chat with DeepSeek-R1
